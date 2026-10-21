@@ -39,6 +39,9 @@ struct ResultParser: Sendable {
         {
             return result
         }
+        if case DecodingError.keyNotFound(let key, _) = firstError, key.stringValue == "type" {
+            throw .missingType
+        }
         throw .malformedJSON(reason: String(describing: firstError))
     }
 

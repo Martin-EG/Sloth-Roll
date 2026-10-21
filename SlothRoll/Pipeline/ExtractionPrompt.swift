@@ -1,7 +1,8 @@
 import Foundation
 
-/// Builds the bilingual (Spanish/English) extraction prompt, anchored to today's date so
-/// relative dates like "este sábado" or "tomorrow" resolve to real days.
+/// Builds the bilingual (Spanish/English) extraction prompt, anchored to the day the
+/// screenshot was taken (or today if unknown) so "hoy", "mañana" or "este sábado" resolve
+/// to real days.
 struct ExtractionPrompt: Sendable {
     static let returnOnlyJSON = "Return ONLY the JSON object, no extra text."
 
@@ -14,12 +15,16 @@ struct ExtractionPrompt: Sendable {
     private static let posix = Locale(identifier: "en_US_POSIX")
     private static let saturday = 7
 
-    private let today: Date
+    /// The day relative dates are counted from.
+    private let anchor: Date
+    private let anchorIsCapture: Bool
     private let calendar: Calendar
 
-    /// `calendar` decides the user's time zone, so "today" is the user's local day.
-    init(today: Date, calendar: Calendar = .current) {
-        self.today = today
+    /// `capturedAt` comes from Photos; when it's nil, relative dates count from `today`.
+    /// `calendar` decides the user's time zone, so days are the user's local days.
+    init(capturedAt: Date?, today: Date, calendar: Calendar = .current) {
+        self.anchor = capturedAt ?? today
+        self.anchorIsCapture = capturedAt != nil
         self.calendar = calendar
     }
 
@@ -29,13 +34,13 @@ struct ExtractionPrompt: Sendable {
         You read one phone screenshot. It may be in Spanish or English. Extract the single most \
         useful action from it.
 
-        Today is \(dayLabel(today)).
-        Upcoming days: \(upcomingDays()).
-        Resolve relative dates ("mañana", "tomorrow", "este sábado", "next Friday", \
-        "el próximo lunes") with these dates. If no year is shown, use the next date that \
-        has not passed.
+        \(anchorSentence)
+        The days after it: \(upcomingDays()).
+        Resolve relative dates ("hoy", "today", "mañana", "tomorrow", "este sábado", \
+        "next Friday", "el próximo lunes") from that day using these dates. If a date shows \
+        no year, use the first matching date on or after that day.
 
-        type is one of:
+        "type" is required and is one of:
         - "event": something that happens at a date or time (concert, meeting, cita, \
         reservation, flight, class).
         - "place": a restaurant, shop, venue, or address worth saving, with no specific date.
@@ -43,11 +48,17 @@ struct ExtractionPrompt: Sendable {
         comprobante, factura).
         - "none": anything else (memes, chats, settings, photos, home screens).
 
-        Fields:
+        Fields (always include all eight keys, in this order):
+        - "type": "event", "place", "receipt", or "none". Never leave it out.
         - "title": short, at most 6 words, in the screenshot's language.
-        - "date": "YYYY-MM-DD" or null. "time": 24-hour "HH:mm" or null.
+        - "date": "YYYY-MM-DD" or null.
+        - "time": 24-hour "HH:mm" or null. Convert AM/PM: "08:25 PM" is "20:25", \
+        "12:30 a. m." is "00:30".
         - "location": venue name or address, or null.
-        - "amount": the final total as a plain number (249.50), or null. No symbols or commas.
+        - "amount": money only: a price or total shown with "$", "MXN", "USD", "Total", \
+        "Importe", "Pagado", or "Precio". Write it as a plain number (249.50), no symbols or \
+        commas. Order, folio, booking, confirmation, ticket, seat, and phone numbers are NOT \
+        amounts. If no price is shown, use null.
         - "currency": "MXN", "USD", or null. A bare "$" on a Mexican screenshot means "MXN".
         - "confidence": "low", "medium", or "high".
 
@@ -71,12 +82,18 @@ struct ExtractionPrompt: Sendable {
 
     // MARK: - Private
 
-    /// One line of valid output, dated this coming Saturday so it matches the date list.
+    private var anchorSentence: String {
+        anchorIsCapture
+            ? "This screenshot was taken on \(dayLabel(anchor)). That day is \"hoy\" / \"today\"."
+            : "Today is \(dayLabel(anchor))."
+    }
+
+    /// One line of valid output, dated the Saturday after the anchor so it matches the list.
     private var example: String {
         let saturday =
             calendar.nextDate(
-                after: today, matching: DateComponents(weekday: Self.saturday),
-                matchingPolicy: .nextTime) ?? today
+                after: anchor, matching: DateComponents(weekday: Self.saturday),
+                matchingPolicy: .nextTime) ?? anchor
         return """
             {"type":"event","title":"Noche de jazz","date":"\(isoDate(saturday))",\
             "time":"21:00","location":"Blue Room, Roma Norte","amount":null,"currency":null,\
@@ -86,7 +103,7 @@ struct ExtractionPrompt: Sendable {
 
     private func upcomingDays() -> String {
         (1...PipelineConfig.promptCalendarDays)
-            .compactMap { calendar.date(byAdding: .day, value: $0, to: today) }
+            .compactMap { calendar.date(byAdding: .day, value: $0, to: anchor) }
             .map(dayLabel)
             .joined(separator: "; ")
     }

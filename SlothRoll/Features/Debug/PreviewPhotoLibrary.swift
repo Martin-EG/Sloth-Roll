@@ -11,7 +11,7 @@ struct PreviewPhotoLibrary: PhotoLibraryProviding {
 
     func loadImage(assetID: String) async -> LibraryImage? {
         guard let image = PreviewVLM.sampleImage() else { return nil }
-        return LibraryImage(assetID: assetID, image: image, thumbnail: image)
+        return LibraryImage(assetID: assetID, image: image, thumbnail: image, capturedAt: nil)
     }
 }
 #endif

@@ -120,8 +120,11 @@ struct ResultParserTests {
     }
 
     @Test func rejectsObjectWithoutType() {
-        #expect(throws: PipelineError.self) {
+        #expect(throws: PipelineError.missingType) {
             try parser.parse(#"{"error": "The provided text does not contain a valid date."}"#)
+        }
+        #expect(throws: PipelineError.missingType) {
+            try parser.parse(#"{"title": "Anuar 50's", "date": "2026-10-23", "confidence": "high"}"#)
         }
     }
 

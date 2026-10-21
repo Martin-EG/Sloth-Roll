@@ -4,6 +4,8 @@ import Foundation
 enum PipelineError: LocalizedError, Equatable, Sendable {
     case noJSONObject
     case malformedJSON(reason: String)
+    /// Valid JSON, but no "type" key (e.g. {"error": "..."} or a half-filled object).
+    case missingType
     case invalidDate(String)
     case invalidTime(String)
     case negativeAmount(Decimal)
@@ -13,7 +15,7 @@ enum PipelineError: LocalizedError, Equatable, Sendable {
 
     var errorDescription: String? {
         switch self {
-        case .noJSONObject, .malformedJSON, .invalidDate, .invalidTime, .negativeAmount,
+        case .noJSONObject, .malformedJSON, .missingType, .invalidDate, .invalidTime, .negativeAmount,
             .missingTitle:
             "The model's answer couldn't be used."
         case .photoAccessDenied:

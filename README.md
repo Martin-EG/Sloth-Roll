@@ -12,10 +12,13 @@ download.
 Today (day 2) the app turns one screenshot into a checked, typed answer, and has a debug
 screen to measure how well that works.
 
-1. The app builds a prompt (Spanish + English) that includes today's date and the next
-   seven days with their weekday names, so "este sábado" or "tomorrow" map to a real date.
-   It asks for one JSON object: type (event / place / receipt / none), title, date, time,
-   location, amount, currency, confidence.
+1. The app builds a prompt (Spanish + English) that includes the day the screenshot was
+   taken (from Photos; today if unknown) and the seven days after it, with weekday names.
+   So "hoy", "mañana" or "este sábado" mean those days relative to when you took the
+   screenshot, not when you scan it. It asks for one JSON object: type (event / place /
+   receipt / none, always required), title, date, time, location, amount, currency,
+   confidence. Amounts must be money (a price or total); order, folio and booking numbers
+   are called out as not amounts. AM/PM times are converted to 24-hour.
 2. The on-device model reads the screenshot and answers.
 3. The parser cuts the answer down to the JSON object (it ignores chatter, code fences,
    trailing commas, and junk after the object), decodes it, and checks it: the date must be
@@ -161,3 +164,32 @@ run summary), `pipeline` (attempts, parse failures) or `inference`.
   was taken; order numbers get read as amounts; AM/PM conversion is unstable; the model
   wraps JSON in code fences every time (parser handles it). 2 images is too few to judge
   accuracy or triage; no junk screenshots in the album yet.
+
+### 2026-10-21 (day 2, cont.): dates anchored to the screenshot, amount rule
+
+- Built: the prompt now counts relative dates from the screenshot's creation date
+  (`PHAsset.creationDate` → `LibraryImage.capturedAt` → `Extractor.extract(image:capturedAt:)`
+  → `ExtractionPrompt`). Amount rule: money only, never order/folio/booking/ticket/seat/phone
+  numbers. AM/PM conversion examples. `"type"` is listed as a required first field, and a
+  missing type gets its own error (`PipelineError.missingType`) and a specific retry reason.
+- Files changed: `Pipeline/{ExtractionPrompt,Extractor,LibraryImage,PhotoLibrary,
+  PipelineError,ResultParser}.swift`, `Features/Debug/{EvalRow,EvalReport,EvalViewModel,
+  PreviewPhotoLibrary}.swift`, tests (35 pass).
+- Lesson: the first version of the new prompt made the model drop the `"type"` key on 23 of
+  24 images, so every image needed a retry and 6 fell back. Listing `"type"` as a required
+  field fixed it: 0 retries, 0 fallbacks in the next run.
+- Eval (19 images, judged against OCR text): type right on 18/19 (95%); the miss is a
+  Cinépolis purchase history ("Total: $490") read as an event, should be receipt. All 6
+  junk images came back `none`. Relative dates right on 4/5 ("Hoy, 16 de julio" now gives
+  2026-07-16). Events with date and time both right: 6 of 10 checked. Errors: the chat
+  message timestamp or status-bar clock used as the event time (2 rows), a past "25 abr"
+  dated 2026 instead of 2027, one wrong relative date. Order number no longer read as an
+  amount (came back 0 instead of null).
+- Timing: median 7.9 s per image, mean 8.5 s without one 84.5 s outlier (a camera photo,
+  cause unknown), 12.5 s with it. OCR fast mode mean 0.15 s.
+- Triage: "no text" (0 characters) drops 2 of 6 junk images; a 20-character threshold drops
+  3 of 6 and loses no real action (shortest real one had 40). Text-heavy junk (chats) still
+  needs the model.
+- Known issues: event time taken from message timestamps or the status bar; no-year dates in
+  the past; amount 0 instead of null; the 84.5 s outlier; album contents changed between
+  runs (24 → 19 images), so runs aren't directly comparable.

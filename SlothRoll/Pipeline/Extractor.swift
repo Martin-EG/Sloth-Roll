@@ -22,14 +22,16 @@ struct Extractor: Sendable {
         self.now = now
     }
 
-    func extract(image: CGImage) async -> ActionResult {
-        await extractWithReport(image: image).result
+    /// `capturedAt` is when the screenshot was taken; relative dates resolve against it.
+    /// Without it they resolve against today.
+    func extract(image: CGImage, capturedAt: Date? = nil) async -> ActionResult {
+        await extractWithReport(image: image, capturedAt: capturedAt).result
     }
 
-    func extractWithReport(image: CGImage) async -> ExtractionReport {
+    func extractWithReport(image: CGImage, capturedAt: Date? = nil) async -> ExtractionReport {
         let clock = ContinuousClock()
         let start = clock.now
-        let prompt = ExtractionPrompt(today: now(), calendar: calendar)
+        let prompt = ExtractionPrompt(capturedAt: capturedAt, today: now(), calendar: calendar)
         var rawOutputs: [String] = []
         var problems: [String] = []
         var attemptsMade = 0
@@ -81,6 +83,7 @@ struct Extractor: Sendable {
         switch error {
         case .noJSONObject: "no JSON object found"
         case .malformedJSON: "the JSON was malformed"
+        case .missingType: "the \"type\" key was missing; it must be event, place, receipt, or none"
         case .invalidDate(let date): "\"\(date)\" is not a real YYYY-MM-DD date"
         case .invalidTime(let time): "\"\(time)\" is not a 24-hour HH:mm time"
         case .negativeAmount: "amount must not be negative"

@@ -6,6 +6,7 @@ import Foundation
 struct EvalReport: Codable, Sendable {
     struct Row: Codable, Sendable {
         let assetID: String
+        let capturedAt: Date?
         let result: ActionResult
         let attempts: Int
         let usedFallback: Bool
@@ -39,6 +40,7 @@ struct EvalReport: Codable, Sendable {
         self.rows = rows.map { row in
             Row(
                 assetID: row.assetID,
+                capturedAt: row.capturedAt,
                 result: row.report.result,
                 attempts: row.report.attempts,
                 usedFallback: row.report.usedFallback,

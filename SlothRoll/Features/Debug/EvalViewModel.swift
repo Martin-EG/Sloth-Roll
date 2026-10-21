@@ -126,11 +126,12 @@ final class EvalViewModel {
             return
         }
         let scan = await triage.scanText(in: photo.image)
-        let report = await extractor.extractWithReport(image: photo.image)
+        let report = await extractor.extractWithReport(
+            image: photo.image, capturedAt: photo.capturedAt)
         rows.append(
             EvalRow(
-                assetID: assetID, thumbnail: photo.thumbnail, report: report, textScan: scan,
-                mark: mark))
+                assetID: assetID, thumbnail: photo.thumbnail, capturedAt: photo.capturedAt,
+                report: report, textScan: scan, mark: mark))
 
         Log.eval.info(
             """

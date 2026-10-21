@@ -1,10 +1,12 @@
 #if DEBUG
 import CoreGraphics
+import Foundation
 
 /// One evaluated screenshot: what OCR and the model found, and the human mark.
 struct EvalRow: Identifiable, Sendable {
     let assetID: String
     let thumbnail: CGImage?
+    let capturedAt: Date?
     let report: ExtractionReport
     let textScan: TextScan
     var mark: EvalMark?

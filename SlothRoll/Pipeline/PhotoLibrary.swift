@@ -44,7 +44,8 @@ struct PhotoLibrary: PhotoLibraryProviding {
         ]
         let thumbnail = CGImageSourceCreateThumbnailAtIndex(
             source, 0, thumbnailOptions as CFDictionary)
-        return LibraryImage(assetID: assetID, image: image, thumbnail: thumbnail)
+        return LibraryImage(
+            assetID: assetID, image: image, thumbnail: thumbnail, capturedAt: asset.creationDate)
     }
 
     private static func imageData(for asset: PHAsset) async -> Data? {

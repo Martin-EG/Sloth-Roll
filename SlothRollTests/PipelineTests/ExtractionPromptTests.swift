@@ -13,10 +13,29 @@ struct ExtractionPromptTests {
     private static let today = calendar.date(
         from: DateComponents(year: 2026, month: 10, day: 20, hour: 12))!
 
-    private let prompt = ExtractionPrompt(today: today, calendar: calendar)
+    /// Thursday 2026-07-16, 8 PM: a screenshot taken months before the scan.
+    private static let capturedAt = calendar.date(
+        from: DateComponents(year: 2026, month: 7, day: 16, hour: 20))!
 
-    @Test func includesTodayWithWeekdayInBothLanguages() {
+    private let prompt = ExtractionPrompt(capturedAt: nil, today: today, calendar: calendar)
+
+    @Test func withoutCaptureDateAnchorsToToday() {
         #expect(prompt.text.contains("Today is Tuesday / martes 2026-10-20."))
+    }
+
+    @Test func captureDateIsTheAnchorForRelativeDates() {
+        let text = ExtractionPrompt(capturedAt: Self.capturedAt, today: Self.today, calendar: Self.calendar).text
+        #expect(text.contains("This screenshot was taken on Thursday / jueves 2026-07-16."))
+        #expect(text.contains("Friday / viernes 2026-07-17"))
+        #expect(!text.contains("2026-10-20"))
+    }
+
+    @Test func typeIsTheFirstRequiredField() {
+        #expect(prompt.text.contains("- \"type\": \"event\", \"place\", \"receipt\", or \"none\". Never leave it out."))
+    }
+
+    @Test func amountRuleExcludesOrderNumbers() {
+        #expect(prompt.text.contains("Order, folio, booking, confirmation, ticket, seat, and phone numbers are NOT"))
     }
 
     @Test func listsUpcomingDaysForRelativeDates() {

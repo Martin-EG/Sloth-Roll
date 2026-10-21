@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import Testing
 
 @testable import SlothRoll
@@ -81,6 +82,17 @@ struct ExtractorTests {
         #expect(report.usedFallback)
         #expect(report.attempts == 2)
         #expect(report.rawOutputs.isEmpty)
+    }
+
+    @Test func captureDateReachesThePrompt() async throws {
+        let vlm = ScriptedVLM([.text(Self.good)])
+        let july = Date(timeIntervalSince1970: 1_784_246_400)  // 2026-07-17 00:00 UTC
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+
+        _ = await Extractor(vlm: vlm, calendar: calendar).extract(image: try Self.image(), capturedAt: july)
+
+        #expect(await vlm.prompts.first?.contains("This screenshot was taken on Friday / viernes 2026-07-17.") == true)
     }
 
     @Test func generationErrorThenGoodAnswerSucceeds() async throws {
