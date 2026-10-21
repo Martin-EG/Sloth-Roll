@@ -1,4 +1,6 @@
-docs/
+# Private planning notes
+docs/sloth-roll-mvp.md
+docs/sloth-roll-build-sequence.md
 .DS_Store
 
 # Xcode
@@ -7,6 +9,11 @@ build/
 xcuserdata/
 *.xcuserstate
 *.xcscmblueprint
+*.xcarchive
+*.ipa
+*.dSYM.zip
+*.dSYM/
+*.hmap
 
 # SwiftPM
 .build/
@@ -16,3 +23,7 @@ xcuserdata/
 *.safetensors
 *.gguf
 /models/
+
+# Eval / scan output copied off the phone
+eval-report.json
+scan-stats.json

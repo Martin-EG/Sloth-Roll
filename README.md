@@ -1,309 +1,176 @@
-![Sloth Roll](public/sloth-roll-banner.png)
+![Sloth Roll: your screenshots, turned into actions on-device](public/sloth-roll-banner.png)
 # Sloth Roll
+
+**You took the screenshot. Sloth Roll does the rest.**
 
 ## Overview
 
-Sloth Roll is an iOS app that reads your screenshots on-device with an open-weight
-vision-language model (VLM) and turns them into actions: a calendar event, a Maps place,
-or an in-app expense. You only swipe. Nothing leaves the phone except the one-time model
-download.
+An iPhone app that reads your screenshots with an open-weight vision model running on the
+phone and turns each one into a card: an event for Calendar, a place for Maps, or a
+receipt for your expense list. You only swipe. Nothing is uploaded, and after a one-time
+model download it works in airplane mode.
+
+Built for the "Slow and Steady" theme: your camera roll fills up with screenshots of
+things you meant to do later. Sloth Roll does the slow, boring part for you, one image at a
+time, on your phone, and waits. You don't type, copy, paste, or switch apps. You only
+swipe, whenever you feel like it.
+
+<!-- Replace with a GIF of a scan and a few swipes (e.g. public/sloth-roll-demo.gif). -->
+_Demo GIF coming soon._ **Demo video:** _link coming soon_ <!-- paste the video link here -->
+
+| The screenshot shows | Swipe right and… |
+| --- | --- |
+| An event (flyer, invite, ticket, chat with a date) | it's added to **Calendar** (add-only access) |
+| A place (restaurant, venue, address) | it opens in **Apple Maps** |
+| A receipt (purchase, bill, total) | it's saved to the in-app **Expenses** list, totals per currency |
+| Nothing useful (memes, old chats, blurry or duplicate shots) | it lands in the **Clean up** pile, deleted in one tap through iOS's own confirmation |
 
 ## How it works
 
-Today (day 6) a fresh install walks you through three short screens, downloads the model
-once, and then opens on three tabs (four when there is something to clean up). On **Scan** you tap **Scan** and the app works through
-your newest images on its own, saving every answer on the phone. Each screenshot with an
-action becomes a card; you swipe right to do it, left to skip. **Expenses** lists the
-receipts you kept, with a total per currency. **Clean up** appears only when the scan found
-screenshots worth deleting (blurry, duplicate, or not useful) and deletes them in one tap,
-through iOS's own confirmation. **Settings** sets how many screenshots a scan
-reads, can start over from scratch, and says which model runs on the phone.
+1. **Download once**: on first launch, two intro screens and a one-time download of the
+   model (about 1.8 GB, Wi-Fi recommended).
+2. **Scan**: tap Scan. The app looks at your newest images and skips any it has already
+   read. A cheap **triage** pass runs first with no model loaded: camera photos are
+   skipped, and Apple's Vision text recognition must find at least 20 characters. The
+   same pass measures blur and takes a Vision feature print for duplicates.
+3. **Read**: the model loads once and reads only the images that passed, newest first.
+   It answers with one JSON object (type, title, date, time, place, amount, currency,
+   confidence). The prompt gives it the screenshot's own date, so "mañana" or "este
+   sábado" land on the right day. Answers are untrusted: a forgiving parser checks every
+   field, a bad answer gets one stricter retry, and it never crashes on bad output. Each
+   answer is saved right away; the model is unloaded at the end.
+4. **Swipe**: each action becomes a card. Right does it (Calendar, Maps, or Expenses),
+   left skips it for good, and a tap lets you fix the title, date, place, or amount first.
+   Cards the model wasn't sure about say "not sure".
+5. **Clean up**: leftovers that are blurry, near-duplicates, or that the model calls not
+   useful ("Is this screenshot still useful to keep?", only a clear "no" counts) show up
+   in a Clean up tab. Delete goes through iOS's confirmation into Recently Deleted.
 
-0. **First launch.** Two intro screens ("You take screenshots. Sloth Roll does the rest.",
-   "Everything runs on your iPhone. Nothing is uploaded."), then the model screen: it shows
-   the size (1.8 GB), recommends Wi-Fi, and has a **Download** button. While it downloads
-   you see a progress bar with "640 MB of 1.8 GB" and the screen stays awake. If it fails
-   (no connection, no space) you get a plain message and **Retry**. When it's done, **Start**
-   opens the app, and the app remembers that onboarding is finished. If the model is already
-   on the phone (reinstall that kept data), the screen goes straight to **Start**. The model
-   files are kept out of iCloud backups.
-1. **Find new images.** The app asks for Photos access (if you only allow some photos, it
-   scans those and says so). If access is off, the Scan tab shows "Photos access is off"
-   with **Open Settings** (jumps to the app's page in iOS Settings) and **Check again**. It looks at the newest 500 images and skips anything it has
-   already seen. Camera photos (files with camera make/model/lens info) are skipped and
-   remembered; screenshots and saved images (flyers from WhatsApp, images from Safari) go on.
-2. **Triage first, for up to 50 new images** (25, 50, or 100, picked in Settings). Apple's text recognition reads each one. If it
-   finds fewer than 20 characters, the image is marked skipped. No model is loaded yet.
-3. **Then the model.** The vision model loads once and reads only the images that passed
-   triage, one at a time, newest first. Each answer is saved right away: a real action
-   (event, place, receipt), "no action", or "couldn't read this one". Then the model is
-   unloaded to free about 2 GB. While the scan runs and no cards exist yet, the card area
-   says "Reading your screenshots." If the model can't load, an orange message says why,
-   the button turns into **Try again**, and the images that passed triage wait for it.
-   When a scan ends, one line says what happened: "Found 3 new cards.", "No events,
-   places, or receipts in the new screenshots.", or "No new screenshots since the last
-   scan."
-4. **Stop, pause, resume.** "Stop after this one" finishes the current image and keeps
-   everything so far. If iOS warns that memory is low, the app finishes the current image,
-   unloads the model, and pauses with a message. Tapping **Resume scan** picks up the images
-   that passed triage but weren't read yet.
-5. **Review cards.** Every result with an action shows up as a card, newest screenshot
-   first: the screenshot, an Event / Place / Receipt badge, the title, and what will happen
-   in plain words ("Add event · Sat 25 Oct, 18:00 · Teatro del Estado"). Cards the model
-   marked low confidence carry a small "not sure" tag.
-   - **Swipe right** (or tap the green button): the card tilts and turns sloth green, then
-     the action runs. The phone gives a light tap on every swipe and a success buzz when
-     the action is done. A short message says what happened ("Added to Calendar: Feria del Libro,
-     Sat 25 Oct") and the card is marked done.
-   - **Swipe left** (or **Skip**): the card turns red and is marked skipped. It never comes
-     back.
-   - **Tap the card** to fix the title, date, time, place, or amount before swiping.
-   - If the action can't run (calendar access denied, no date, no amount), the card springs
-     back and a message says why. Nothing is lost.
-   - With no cards left: "Nothing to do. Very sloth."
-6. **What each swipe does.**
-   - **Event:** the first time, iOS asks for calendar access (add-only: the app can never
-     read your calendar). The event goes into your default calendar: one hour long if it
-     has a time, all-day if not.
-   - **Place:** Apple Maps opens on the place. The app looks the text up with Apple's place
-     search first; if that finds nothing, Maps opens with a plain search for the text.
-   - **Receipt:** an expense is saved inside the app (title, amount, currency, date). If the
-     receipt has no date, the day of the screenshot is used. Nothing is exported.
+**Where your screenshots go.** Nowhere. Text recognition (Vision) and the model (MLX on the
+phone's GPU) both run on the iPhone; no image, text, or result is uploaded, and there is no
+account, analytics, or server. The only network call is the one-time model download.
+After that, scanning, cards, Calendar, Expenses and Clean up all work in airplane mode.
+Opening a place hands it to Apple Maps, which uses Apple's place search when there's a
+connection. Calendar access is add-only: the app can't read your events.
 
-7. **Clean up pile.** While triage has each image open it also measures how blurry it is
-   and takes Apple's image "fingerprint" (a Vision feature print), so nothing is loaded
-   twice. After the model has read the cards, the app looks at the screenshots that ended
-   up skipped: too little text, the model found no action, or you swiped them left (those
-   are judged on the next scan). Camera photos are never touched.
-   - **Blurry:** few sharp edges (but a plain blank screen doesn't count as blurry).
-   - **Duplicate:** screenshots whose fingerprints are very close form a group; the newest
-     one is kept and the older ones are offered.
-   - **Not useful:** for everything else, the same model (still loaded, so no second model)
-     is asked one question: "Is this screenshot still useful to keep? Answer only yes or no."
-     Only a clear "no" puts it in the pile; anything unclear keeps it. Each screenshot is
-     asked once.
-   The **Clean up** tab (with a count badge) shows them in a grid, each with a Blurry /
-   Duplicate / Not useful badge, all selected. Tap to unselect; **Select all / Deselect
-   all** in the corner. **Delete N screenshots** hands them to Photos, which shows its own
-   "Allow Sloth Roll to delete…" prompt; they go to Recently Deleted (30 days), never
-   deleted for good. If you say no in that prompt, nothing changes. After a delete, the
-   ones you unselected are kept for good and never offered again, and the tab disappears
-   once you leave it empty.
-
-**Reading one image** (the extraction step):
-
-1. The app builds a prompt (Spanish + English) that includes the day the screenshot was
-   taken (from Photos; today if unknown) and the seven days after it, with weekday names.
-   So "hoy", "mañana" or "este sábado" mean those days relative to when you took the
-   screenshot, not when you scan it. It asks for one JSON object: type (event / place /
-   receipt / none, always required), title, date, time, location, amount, currency,
-   confidence. Amounts must be money (a price or total); order, folio and booking numbers
-   are called out as not amounts. AM/PM times are converted to 24-hour.
-2. The on-device model reads the screenshot and answers.
-3. The parser cuts the answer down to the JSON object (it ignores chatter, code fences,
-   trailing commas, and junk after the object), decodes it, and checks it: the date must be
-   a real day, the time a real 24-hour time, the amount not negative. Unknown words for
-   type or confidence become the safe choice ("none", "low") instead of an error.
-4. If the answer can't be used, the app asks once more with a stricter reminder. If that
-   fails too, the screenshot is marked "Couldn't read this one". It never crashes on bad
-   output.
-
-**Settings.** "Screenshots per scan" (25 / 50 / 100, default 50). **Rescan everything**
-asks first, then forgets what the app read so the next scan reads your screenshots again;
-cards you already did stay done (no duplicate events or expenses) and expenses are kept.
-The model section shows the model ID, its size, whether it's on the phone, and "Runs
-on-device. Nothing is uploaded." Debug builds add a **Debug** section: the eval screen,
-**Show onboarding again** (for rehearsing the demo), and the last scan's stats (counts,
-timings, peak memory).
-
-**Eval screen (debug builds).** Tap **Load model**, then **Run eval**. The app reads every
-image in the Photos album "Sloth Test" (screenshots, saved images, and camera photos; each
-row is labeled with its source), runs Apple's text recognition and then the model on
-each, and lists thumbnail, type, title, date, amount, and time taken. The summary shows
-counts per type, average times, retries, and accuracy. Use the menu on each row to mark it
-correct, or wrong and what it should have been. Marks are saved to
-`Documents/eval-report.json` and carried over to the next run.
+Every step in detail: [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Architecture
 
-```
-SlothRoll/
-  App/         SlothRollApp (entry), AppDependencies (composition root, builds the action
-               performers), RootView (onboarding until done, then TabView: Scan,
-               Expenses, Clean up (only with candidates), Settings; hosts the debug eval
-               sheet), RootTab
-  Features/    one folder per screen (View + @Observable @MainActor ViewModel)
-    Onboarding/ OnboardingView (paged: 2 intro pages + download), OnboardingPage,
-               ModelDownloadView, OnboardingViewModel (check / download / retry),
-               ModelDownloadState, OnboardingConfig
-    Scan/      ScanView (scan button + progress + card stack), ScanViewModel,
-               CardStackView (@Query of `extracted` items, drag/buttons, tint, rotation,
-               haptics), CardView, CardStackViewModel (perform / skip / edit / card
-               images, toast), EditSheet, CardText (plain-words proposal + SF Symbol per
-               type), TypeBadge, ScanConfig
-    Expenses/  ExpenseListView (@Query of expenses, totals on top), ExpensesViewModel,
-               CurrencyTotal
-    Cleanup/   CleanupView (@Query of items with a cleanup reason, grid + delete bar),
-               CleanupCell, CleanupReasonBadge, CleanupViewModel (selection, thumbnails,
-               delete via PhotoLibraryProviding, keep the unselected), CleanupConfig
-    Settings/  SettingsView (scan limit, rescan, model info, debug section),
-               SettingsViewModel, ScanStatsSection (DEBUG only)
-    Debug/     (DEBUG only) EvalView, EvalRowView, EvalViewModel, EvalRow, EvalMark,
-               EvalSummary, EvalReport, EvalReportStore, EvalConfig,
-               PreviewVLM + PreviewPhotoLibrary (fakes for SwiftUI previews)
-  Pipeline/    ScanCoordinator (@Observable @MainActor: triage pass, then extraction pass,
-               then cleanup pass), CleanupJudge (blur + duplicate rules, "still useful?"
-               question), ImageAnalyzing + ImageAnalyzer (Laplacian blur score, Vision
-               feature print) + ImageSignals, DuplicateFinder (union-find over feature-print
-               distance, keeps newest), UsefulnessQuestion (prompt + yes/no reader),
-               ScanStore (SwiftData reads/writes for the scan), ScanPhase, ScanStats,
-               Extractor (VLM + parse + retry), ExtractionPrompt, ResultParser,
-               ExtractionReport, ImageTriaging + Triage (Vision OCR, 20+ chars) + TextScan,
-               PhotoLibraryProviding + PhotoLibrary (PhotoKit, incl. deleteAssets) +
-               PhotoAccess + LibraryImage
-               + ImageSource, PipelineError, PipelineConfig
-  Inference/   VLMService (actor: isDownloaded / download / load / describe / unload),
-               ModelCatalog, InferenceConfig, InferenceError,
-               HubDownloader + TransformersTokenizer(Loader) (mlx-swift-lm adapters)
-  Actions/     ActionPerformer (protocol), EventAction (actor, EventKit write-only) +
-               EventDraft, PlaceAction (MKLocalSearch, maps:// fallback), ReceiptAction
-               (SwiftData Expense), ActionError, ActionsConfig
-  Models/      ActionResult (+Dates: "YYYY-MM-DD"/"HH:mm" <-> Date), ActionType, Currency
-               (+Format), Confidence, ActionOutcome, VLMServing (protocol)
-  Storage/     ScreenshotItem (@Model: assetID unique, status, skip reason, result JSON,
-               capturedAt, processedAt, sharpness/contrast/feature print, cleanup reason,
-               checked/kept dates), Expense (@Model), ScanStatus, SkipReason, CleanupReason,
-               Persistence (container; falls back to in-memory if the store won't open)
-  Shared/      Log (os.Logger categories), MemoryProbe, Duration+Seconds, Toast +
-               ToastOverlay (`.toast(_:duration:)`), SettingsKey (@AppStorage keys)
-  Resources/   Assets (AppIcon, AccentColor sloth green light/dark, SlothMark logo),
-               Info.plist, SlothRoll.entitlements
-SlothRollTests/
-  ParserTests/     ResultParserTests
-  PipelineTests/   ExtractorTests (scripted fake VLM), ExtractionPromptTests,
-                   ImageSourceTests, ScanCoordinatorTests (+ cleanup suite) + ScanFakes,
-                   DuplicateFinderTests, ImageAnalyzerTests, UsefulnessQuestionTests
-  StorageTests/    ScreenshotItemTests
-  ActionsTests/    EventDraftTests, ReceiptActionTests, PlaceActionTests
-  FeaturesTests/   EvalSummaryTests, CardStackViewModelTests (fake performer),
-                   CardTextTests, ExpensesViewModelTests, OnboardingViewModelTests,
-                   ScanViewModelTests, CleanupViewModelTests
+```mermaid
+flowchart LR
+    UI["SwiftUI views<br/>Scan · Expenses · Clean up · Settings"] --> VM["@Observable ViewModels"]
+    VM --> SC["ScanCoordinator"]
+    VM --> ACT["Actions<br/>EventAction · PlaceAction · ReceiptAction"]
+    SC --> PK["PhotoKit<br/>PhotoLibrary"]
+    SC --> VN["Vision<br/>Triage (OCR) · ImageAnalyzer"]
+    SC --> EX["Extractor<br/>prompt + ResultParser"]
+    EX --> VLM["VLMService (actor)<br/>MLX · Qwen3-VL-2B 4-bit"]
+    SC --> SD[("SwiftData<br/>ScreenshotItem · Expense")]
+    ACT --> EK["EventKit / Maps"]
+    ACT --> SD
+    SD -. "@Query: cards, expenses, clean-up pile" .-> UI
 ```
 
-Data flow on first launch:
+`ScanCoordinator` lists new images from PhotoKit, triages them with Vision, loads the model
+once, has `Extractor` read what passed, saves each answer to SwiftData, judges leftovers
+for clean up, then unloads the model. Views read SwiftData with `@Query`, so cards appear
+while the scan runs. A swipe goes through a ViewModel to an `ActionPerformer`.
+Dependencies point downward only (rules in [CLAUDE.md](CLAUDE.md)); every service is a
+protocol wired in `AppDependencies`, so tests swap in fakes.
 
-`RootView` (`@AppStorage hasCompletedOnboarding` false) → `OnboardingView` →
-`OnboardingViewModel.checkExistingDownload()` → `VLMServing.isDownloaded()` (local cache
-only) → **Download** → `VLMServing.download(progress:)` → `VLMService` →
-`MLXLMCommon.resolve` + `HubDownloader` (weights to Application Support, excluded from
-backup; nothing loaded into memory) → **Start** sets the flag → tabs.
+```
+SlothRoll/         The app (SwiftUI, Swift 6, iOS 18+)
+  App/             Entry point, AppDependencies (wires services), RootView, tabs
+  Features/        One folder per screen: Onboarding, Scan, Expenses, Cleanup, Settings,
+                   Debug (eval screen, Debug builds only)
+  Pipeline/        ScanCoordinator, PhotoLibrary, Triage, Extractor, ExtractionPrompt,
+                   ResultParser, clean-up judging
+  Inference/       VLMService (actor), ModelCatalog (model ID and size in one place)
+  Actions/         EventAction (EventKit), PlaceAction (Maps), ReceiptAction (expenses)
+  Models/          Plain value types (ActionResult, ActionType, Confidence, ...)
+  Storage/         SwiftData models (ScreenshotItem, Expense) and Persistence
+  Shared/          Logger categories, toast, small extensions
+  Resources/       Assets, Info.plist, entitlements
+SlothRollTests/    98 unit tests, same folders as the app
+docs/              How it works in detail, architecture, Xcode setup, debug tools and eval
+public/            Banner and icon for this README
+project.yml        XcodeGen spec (the generated SlothRoll.xcodeproj is committed)
+```
 
-Data flow for a scan:
+Every folder, type and data flow: [docs/architecture.md](docs/architecture.md).
 
-`ScanView` (reads the limit from `@AppStorage`) → `ScanViewModel.scan(limit:)` →
-`ScanCoordinator.scan(limit:)`:
-`PhotoLibrary.recentImageIDs` (newest 500) minus `ScanStore.knownAssetIDs` →
-for each, `PhotoLibrary.loadImage` (1024 px + thumbnail + `ImageSource`) → camera? record
-skipped : `Triage.isCandidate` + `ImageAnalyzer.signals` → `ScanStore.record` (triaged /
-skipped, with blur + feature print) → … up to the limit → skipped items from before the
-cleanup feature get measured (no model yet) → `VLMServing.load()` → for each `triaged`
-item: `Extractor` → `ScanStore.complete` (extracted / skipped "none" / failed) →
-`CleanupJudge.applyRules()` (`DuplicateFinder` off the main actor, then blur) → for each
-unjudged skipped item: `CleanupJudge.ask` (`UsefulnessQuestion`, same loaded model; loads
-it only if extraction had nothing to read) → `VLMServing.unload()`. The card stack reads
-`extracted` items through `@Query`, so new cards appear as each item is saved. No Photos
-access ends in `ScanPhase.noPhotoAccess`; a failed load in `.modelLoadFailed(message:)`.
-**Rescan everything**: `SettingsViewModel` → `ScanCoordinator.resetCache()` →
-`ScanStore.deleteItemsNotDone()`.
+## Setup (quick start)
 
-Data flow for a swipe:
+Needs Xcode 27.1+, a physical iPhone on iOS 18+ (tested on an iPhone 17 Pro; MLX doesn't
+run in the Simulator), about 2 GB free on the phone, and an Apple ID in Xcode (a free
+Personal Team works). No API keys, accounts, or servers.
 
-`CardStackView` (drag past 110 pt, or a button) → `CardStackViewModel.perform(item)` →
-`AppDependencies.actionPerformers[type]` (`EventAction` / `PlaceAction` / `ReceiptAction`,
-all behind `ActionPerformer`) → `ActionOutcome` → item `done` + toast + success haptic
-(`completedCount`; the view also plays a light impact on every committed swipe). A thrown
-`ActionError` keeps the item `extracted` and shows its message. Skip → item `skipped`.
-`EditSheet` → `CardStackViewModel.save(_:for:)` rewrites the item's result.
-`ExpenseListView` reads `Expense` through `@Query`; `ExpensesViewModel` sums per currency.
-A left swipe also records `SkipReason.swipedLeft`, which makes the card eligible for cleanup.
-
-Data flow for cleanup: `RootView` `@Query`s items with a `cleanupReasonRaw` to show or hide
-the tab → `CleanupView` grid → `CleanupViewModel.deleteSelected` →
-`PhotoLibraryProviding.deleteAssets` (`PHAssetChangeRequest.deleteAssets`, iOS confirms; a
-`userCancelled` error means "declined") → deleted items' `ScreenshotItem`s removed, the
-unselected get `cleanupKeptAt` and leave the pile.
-
-Eval flow (debug): `EvalView` → `EvalViewModel` → `PhotoLibrary` → `Triage` (OCR, timing)
-→ `Extractor` → row on screen + `eval-report.json`.
-
-`AppDependencies.live` builds the one `VLMService`, the SwiftData container, and the
-`ScanCoordinator`, and hands services out as protocols (`VLMServing`, `PhotoLibraryProviding`,
-`ImageTriaging`, `ImageAnalyzing`), so features never import Inference and tests swap in a fake.
-
-Layer rules (dependencies point downward only) are listed in `CLAUDE.md`.
-
-### Dependencies (Swift Package Manager)
-
-- `mlx-swift-lm` 3.32.x: `MLXVLM`, `MLXLMCommon`
-- `mlx-swift` 0.32.x: `MLX` (memory cache control; already a dependency of mlx-swift-lm)
-- `swift-transformers` 1.3.x: `Tokenizers` (mlx-swift-lm 3.x needs a tokenizer package)
-- `swift-huggingface` 0.13.x: `HuggingFace` (model download, the documented downloader)
-
-The Xcode project is generated from `project.yml` with XcodeGen. The generated
-`SlothRoll.xcodeproj` is committed, so XcodeGen is only needed when the spec changes.
-
-## Setup
-
-1. Xcode 27.1 or newer. Install the Metal Toolchain once (MLX compiles Metal shaders):
+1. Install the Metal Toolchain once (MLX compiles Metal shaders):
    `xcodebuild -downloadComponent MetalToolchain`
-2. Open `SlothRoll.xcodeproj`. Signing is automatic with team `HYZ2GHP9BH` (Personal Team).
-   If you use a different team, change it under Signing & Capabilities.
-3. Entitlement `com.apple.developer.kernel.increased-memory-limit` is in
-   `SlothRoll/Resources/SlothRoll.entitlements`; Xcode adds it to the provisioning profile
-   automatically.
-4. Run on a physical iPhone (MLX does not run in the Simulator). On first install, trust the
-   developer profile on the phone: Settings → General → VPN & Device Management.
-   Developer Mode must be on.
-5. Keep the phone on Wi-Fi for the first launch: the last onboarding screen downloads the
-   model (~1.8 GB). It's stored in Application Support (iOS won't purge it) and excluded
-   from iCloud backup. To see onboarding again on a debug build: Settings tab → Debug →
-   **Show onboarding again** (the model stays downloaded, so it goes straight to Start).
-   For a true fresh-install demo, delete the app first.
-6. If `project.yml` changes: `brew install xcodegen && xcodegen generate`. The app's
-   accent color comes from `ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor`
-   in `project.yml`; without it buttons fall back to system blue.
+2. Open `SlothRoll.xcodeproj`. Swift packages resolve on their own (pinned in
+   `Package.resolved`).
+3. **Signing**: target `SlothRoll` › Signing & Capabilities › pick your own Team (the
+   committed team is the author's). If the bundle ID is taken, change
+   `com.martinespericueta.slothroll` to something unique.
+4. On the iPhone, turn on Developer Mode, pick it as the destination, and Run. With a
+   free team, trust the developer in Settings › General › VPN & Device Management.
+5. First launch: stay on Wi-Fi for the model download. Allow **Full Access** to Photos on
+   the first scan, and Calendars (add-only) on the first event swipe.
+6. Tests: ⌘U with an iPhone Simulator selected (98 unit tests).
 
-7. Photos: the app asks for library access on the first **Run eval**
-   (`NSPhotoLibraryUsageDescription` is set in `project.yml` / `Info.plist`). Choose
-   **Allow Full Access**, or include the test screenshots if you pick limited access.
-8. Eval: create an album named exactly **Sloth Test** in Photos with the test screenshots
-   (kept on the device, not only in iCloud). To run without taps, launch with the argument
-   `-evalAutorun` (Xcode: Scheme → Run → Arguments, or
-   `xcrun devicectl device process launch --device <UDID> com.martinespericueta.slothroll -- -evalAutorun`).
-   Copy the report off the phone with
-   `xcrun devicectl device copy from --device <UDID> --domain-type appDataContainer --domain-identifier com.martinespericueta.slothroll --source Documents/eval-report.json --destination eval-report.json`.
+Version 1.0 (build 1). Step-by-step details and command-line builds:
+[docs/xcode-setup.md](docs/xcode-setup.md). Eval screen, launch arguments and logs (Debug
+builds only): [docs/debug-and-eval.md](docs/debug-and-eval.md).
 
-9. Calendar: the first right swipe on an event asks for calendar access
-   (`NSCalendarsWriteOnlyAccessUsageDescription` is set in `project.yml` / `Info.plist`;
-   the app asks for add-only access). If you deny it, turn it on in Settings › Apps ›
-   Sloth Roll › Calendars.
+## Screenshots
 
-10. Scan timing run (debug): launch with `-scanAutorun -scanReset` (clears the cache except
-   cards already done, then scans). Autorun arguments (`-scanAutorun`, `-evalAutorun`)
-   skip onboarding. Stats land in `Documents/scan-stats.json`; copy them off with the same
-   `devicectl ... copy from` command as step 8, with `--source Documents/scan-stats.json`. Keep the phone
-   unlocked; the scan screen also keeps it awake while running.
+<!-- Replace with real screenshots (PNG in public/) before submitting. -->
 
-11. Clean up: no new permission or Info.plist key. The app already asks for read-write
-   Photos access; deleting always shows iOS's own confirmation and items land in
-   Recently Deleted. With limited access only the photos you picked can be deleted. To
-   tune the blur or duplicate thresholds (`PipelineConfig`), watch the `analyze
-   sharpness=` debug logs in Console while scanning.
+| Onboarding | Swipe cards | Expenses | Clean up |
+| --- | --- | --- | --- |
+| _screenshot_ | _screenshot_ | _screenshot_ | _screenshot_ |
 
-Logs: Console.app, filter subsystem `SlothRoll`, category `eval` (per-image timings and the
-run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory warnings,
-`analyze sharpness=` per image at debug level, `cleanup_rules`, `cleanup_ask`), `cleanup`
-(deletes, counts only), `storage`, `scan`, `onboarding`, `settings`, or `inference`.
+## Known limitations
+
+- **Spanish and English only.** The prompt and the test set cover those two; weekday
+  names and relative dates are spelled out only in them.
+- **Accuracy** (eval screen, 19 hand-checked images, iPhone 17 Pro): type right on 18 of
+  19 (95%), all 6 junk images came back "none"; the miss was a cinema purchase history read
+  as an event instead of a receipt. Fields are weaker: date and time both right on 6 of 10
+  events (slips: a chat timestamp or the status-bar clock taken as the event time, a
+  past date with no year put in this year). Small set: a sanity check, not a benchmark.
+  Every card can be edited before you swipe.
+- **Speed**: about 4 to 8 seconds per image once the model is loaded; a 50-image scan takes
+  a few minutes with the app open.
+- Clean up thresholds (blur, duplicates) are educated guesses and err on keeping.
+- The edit sheet can't change a card's type. Expenses stay in the app (no export).
+  iPhone only, portrait only.
+
+More numbers: [docs/debug-and-eval.md](docs/debug-and-eval.md#accuracy-and-limits).
+
+## Models, libraries and licenses
+
+| What | Used for | License |
+| --- | --- | --- |
+| [`mlx-community/Qwen3-VL-2B-Instruct-4bit`](https://huggingface.co/mlx-community/Qwen3-VL-2B-Instruct-4bit), a 4-bit MLX conversion of [`Qwen/Qwen3-VL-2B-Instruct`](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct) | Reading screenshots and the clean-up question (one model, ~1.8 GB on disk, ~2 GB in memory) | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) |
+| [MLX Swift](https://github.com/ml-explore/mlx-swift) | Running the model on the iPhone's GPU (Metal) | MIT |
+| [mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm) (`MLXVLM`, `MLXLMCommon`) | Loading and running vision-language models | MIT |
+| [swift-transformers](https://github.com/huggingface/swift-transformers) | Tokenizer | Apache-2.0 |
+| [swift-huggingface](https://github.com/huggingface/swift-huggingface) | The one-time model download | Apache-2.0 |
+| Apple PhotoKit, Vision, EventKit, MapKit, SwiftData, SwiftUI | Photos, text recognition, feature prints, Calendar, Maps, storage, UI | Apple SDK |
+
+The model ID lives in one place: `SlothRoll/Inference/ModelCatalog.swift`.
+
+The code in this repo is under the [MIT License](LICENSE). Models and libraries keep their
+own licenses above.
+
+## Credits
+
+- Qwen3-VL by the Qwen team (Alibaba Cloud); 4-bit MLX conversion by mlx-community.
+- MLX and mlx-swift-lm by Apple's ml-explore team; swift-transformers and
+  swift-huggingface by Hugging Face.
+- Built by Martin Espericueta.
 
 ## Dev log
 
@@ -571,3 +438,26 @@ run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory 
   judged on the next scan, not right away. An asset deleted outside the app still shows in
   the grid with a blank thumbnail until you delete it there. The SwiftData store gained
   fields (lightweight migration) — not yet opened on the phone with day-5 data.
+
+### 2026-10-21 (day 7): release prep for submission
+
+- Built: no features, no refactors. README rewritten in a short submission layout (pitch,
+  how it works, Mermaid architecture diagram, quick start, limitations, models and licenses
+  table, credits), with the long detail moved to tracked `docs/` pages. Added an MIT
+  `LICENSE`. Version 1.0 (build 1), now set as `MARKETING_VERSION` /
+  `CURRENT_PROJECT_VERSION` in `project.yml` so XcodeGen keeps it.
+- Audit: no TODO/FIXME, no `print()`, no hardcoded test data in app code (the only sample
+  text is the JSON example inside the extraction prompt, on purpose). Every debug-only
+  piece was already behind `#if DEBUG`: the whole `Features/Debug/` folder (EvalView and
+  its view model, previews, fakes), the Settings debug section, `ScanStatsSection`, the
+  `-evalAutorun` / `-scanAutorun` / `-scanReset` launch arguments, and the stats file. The
+  Release build contains none of it.
+- Files added: `LICENSE`, `docs/{how-it-works,architecture,xcode-setup,debug-and-eval}.md`.
+  Changed: `README.md`, `.gitignore` (archives, dSYMs, eval/scan JSON copied off the phone;
+  `docs/` is tracked now except the two private planning notes), `project.yml`,
+  `SlothRoll/Resources/Info.plist`, `SlothRoll.xcodeproj` (XcodeGen).
+- Checked from a fresh `git clone`: Release and Debug builds for a generic iOS device with
+  no warnings from app code, 98 tests pass in the Simulator.
+- Known issues: screenshots, demo GIF and video link are placeholders. A `name=`
+  Simulator destination in `xcodebuild` can match a paired phone with the same name; use
+  the Simulator's UDID or ⌘U.
