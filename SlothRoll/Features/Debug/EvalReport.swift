@@ -22,7 +22,7 @@ struct EvalReport: Codable, Sendable {
 
     let modelID: String
     let createdAt: Date
-    /// Images in the album, including ones that couldn't be loaded. Optional so reports
+    /// Screenshots in the album, including ones that couldn't be loaded. Optional so reports
     /// saved before this field existed still load (and keep their marks).
     let albumCount: Int?
     /// Assets that couldn't be read from the device (usually iCloud-only originals).

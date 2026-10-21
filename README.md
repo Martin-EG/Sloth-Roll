@@ -29,7 +29,7 @@ screen to measure how well that works.
    output.
 
 **Eval screen (debug builds).** Tap **Load model**, then **Run eval**. The app reads every
-image in the Photos album "Sloth Test", runs Apple's text recognition and then the model on
+screenshot in the Photos album "Sloth Test" (camera photos and saved images are skipped), runs Apple's text recognition and then the model on
 each, and lists thumbnail, type, title, date, amount, and time taken. The summary shows
 counts per type, average times, retries, and accuracy. Use the menu on each row to mark it
 correct, or wrong and what it should have been. Marks are saved to
@@ -193,3 +193,25 @@ run summary), `pipeline` (attempts, parse failures) or `inference`.
 - Known issues: event time taken from message timestamps or the status bar; no-year dates in
   the past; amount 0 instead of null; the 84.5 s outlier; album contents changed between
   runs (24 → 19 images), so runs aren't directly comparable.
+
+### 2026-10-21 (day 2, cont.): screenshots only
+
+- Built: `PhotoLibrary.assetIDs(inAlbum:)` fetches only assets with the `photoScreenshot`
+  subtype (PhotoKit predicate `(mediaSubtypes & photoScreenshot) != 0`). Files changed:
+  `Pipeline/PhotoLibrary.swift`, `Pipeline/PhotoLibraryProviding.swift`,
+  `Features/Debug/EvalReport.swift` (doc only).
+- Eval (album: 19 images → 14 screenshots): the filter dropped 5 images: 3 camera photos and
+  a dog meme (junk, good) and the "Anuar 50's" party flyer (a real event, saved from a chat,
+  not screenshotted: lost). Type right 13/14; the miss is still the Cinépolis purchase
+  history (receipt read as event).
+- Triage after the filter: every screenshot has at least 40 OCR characters (the status-bar
+  clock alone adds some), so "no text" drops 0 and a 20-character threshold drops 0. The 2
+  junk screenshots left are chats with 222 and 581 characters. Conclusion: once only
+  screenshots are fetched, an OCR text gate adds nothing; OCR (0.10 s mean) is only worth
+  keeping as an input for a smarter pre-classifier.
+- Timing: median 7.8 s, but two outliers (329.5 s and 39.9 s) push the mean to 33.1 s. Likely
+  the phone locked or the app went to the background mid-run (iOS pauses GPU work in the
+  background); not confirmed.
+- Known issues: saved images (flyers from WhatsApp) are skipped by the screenshot filter;
+  same image can get a different date between runs (temperature 0.2), e.g. "sábado"
+  → 2026-10-24 last run, 2026-10-20 this run.

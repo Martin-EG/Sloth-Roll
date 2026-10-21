@@ -18,8 +18,10 @@ struct PhotoLibrary: PhotoLibraryProviding {
         guard let album = albums.firstObject else { throw .albumNotFound(title) }
 
         let assetOptions = PHFetchOptions()
+        // Screenshots only: camera photos never hold an action, so they skip OCR and the model.
         assetOptions.predicate = NSPredicate(
-            format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            format: "mediaType == %d AND (mediaSubtypes & %d) != 0",
+            PHAssetMediaType.image.rawValue, PHAssetMediaSubtype.photoScreenshot.rawValue)
         assetOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
         let assets = PHAsset.fetchAssets(in: album, options: assetOptions)
 
