@@ -9,19 +9,28 @@ download.
 
 ## How it works
 
-Today (day 1) the app is a model spike: one debug screen that proves a VLM runs on the
-iPhone.
+Today (day 2) the app turns one screenshot into a checked, typed answer, and has a debug
+screen to measure how well that works.
 
-1. Tap **Load model**. The first time, the app downloads
-   `mlx-community/Qwen3-VL-2B-Instruct-4bit` (~1.8 GB) from Hugging Face and shows
-   progress. Later launches load it straight from disk with no network call.
-2. Tap **Pick image** and choose a screenshot.
-3. Tap **Describe**. The model writes one sentence about the screenshot and says whether it
-   contains an event, a place, a receipt, or none.
-4. The screen shows load time, inference time, peak memory (last run and since launch), and
-   memory still available. The same numbers go to the system log.
+1. The app builds a prompt (Spanish + English) that includes today's date and the next
+   seven days with their weekday names, so "este sábado" or "tomorrow" map to a real date.
+   It asks for one JSON object: type (event / place / receipt / none), title, date, time,
+   location, amount, currency, confidence.
+2. The on-device model reads the screenshot and answers.
+3. The parser cuts the answer down to the JSON object (it ignores chatter, code fences,
+   trailing commas, and junk after the object), decodes it, and checks it: the date must be
+   a real day, the time a real 24-hour time, the amount not negative. Unknown words for
+   type or confidence become the safe choice ("none", "low") instead of an error.
+4. If the answer can't be used, the app asks once more with a stricter reminder. If that
+   fails too, the screenshot is marked "Couldn't read this one". It never crashes on bad
+   output.
 
-**Unload model** frees the model so memory can be checked again.
+**Eval screen (debug builds).** Tap **Load model**, then **Run eval**. The app reads every
+image in the Photos album "Sloth Test", runs Apple's text recognition and then the model on
+each, and lists thumbnail, type, title, date, amount, and time taken. The summary shows
+counts per type, average times, retries, and accuracy. Use the menu on each row to mark it
+correct, or wrong and what it should have been. Marks are saved to
+`Documents/eval-report.json` and carried over to the next run.
 
 ## Architecture
 
@@ -29,24 +38,31 @@ iPhone.
 SlothRoll/
   App/         SlothRollApp (entry), AppDependencies (composition root), RootView
   Features/    one folder per screen (View + @Observable @MainActor ViewModel)
-    Debug/     SpikeView, SpikeViewModel, SpikeConfig  (temporary day-1 spike),
-               PreviewVLM (DEBUG-only fake model for SwiftUI previews)
-  Pipeline/    (empty) scan orchestration, triage, extraction, parsing
+    Debug/     (DEBUG only) EvalView, EvalRowView, EvalViewModel, EvalRow, EvalMark,
+               EvalSummary, EvalReport, EvalReportStore, EvalConfig,
+               PreviewVLM + PreviewPhotoLibrary (fakes for SwiftUI previews)
+  Pipeline/    Extractor (VLM + parse + retry), ExtractionPrompt, ResultParser,
+               ExtractionReport, Triage (Vision OCR) + TextScan,
+               PhotoLibraryProviding + PhotoLibrary (PhotoKit) + LibraryImage,
+               PipelineError, PipelineConfig
   Inference/   VLMService (actor), ModelCatalog, InferenceConfig, InferenceError,
                HubDownloader + TransformersTokenizer(Loader) (mlx-swift-lm adapters)
   Actions/     (empty) EventKit / Maps / expense performers
-  Models/      VLMServing (protocol the features depend on)
+  Models/      ActionResult, ActionType, Currency, Confidence, VLMServing (protocol)
   Storage/     (empty) SwiftData models
   Shared/      Log (os.Logger categories), MemoryProbe, Duration+Seconds
   Resources/   Assets, Info.plist, SlothRoll.entitlements
 SlothRollTests/
-  FeaturesTests/   SpikeViewModelTests (fake VLM, no MLX needed)
+  ParserTests/     ResultParserTests
+  PipelineTests/   ExtractorTests (scripted fake VLM), ExtractionPromptTests
+  FeaturesTests/   EvalSummaryTests
 ```
 
-Data flow for the spike:
+Data flow for one screenshot:
 
-`SpikeView` → `SpikeViewModel` → `VLMServing` (protocol in Models) → `VLMService` (actor in
-Inference) → mlx-swift-lm `VLMModelFactory` / `ChatSession` → MLX on the GPU.
+`EvalView` → `EvalViewModel` → `PhotoLibrary` (loads the image) → `Triage` (OCR, timing
+only) → `Extractor` → `ExtractionPrompt` + `VLMServing` / `VLMService` (MLX on the GPU) →
+`ResultParser` → `ActionResult` (or the fallback) → row on screen + `eval-report.json`.
 
 `AppDependencies.live` builds the one `VLMService` and hands it to the view model as a
 `VLMServing`, so features never import Inference and tests swap in a fake.
@@ -79,7 +95,18 @@ The Xcode project is generated from `project.yml` with XcodeGen. The generated
    stored in Application Support, so iOS won't purge it.
 6. If `project.yml` changes: `brew install xcodegen && xcodegen generate`.
 
-Logs: Console.app, filter subsystem `SlothRoll`, category `spike` (metrics) or `inference`.
+7. Photos: the app asks for library access on the first **Run eval**
+   (`NSPhotoLibraryUsageDescription` is set in `project.yml` / `Info.plist`). Choose
+   **Allow Full Access**, or include the test screenshots if you pick limited access.
+8. Eval: create an album named exactly **Sloth Test** in Photos with the test screenshots
+   (kept on the device, not only in iCloud). To run without taps, launch with the argument
+   `-evalAutorun` (Xcode: Scheme → Run → Arguments, or
+   `xcrun devicectl device process launch --device <UDID> com.martinespericueta.slothroll -- -evalAutorun`).
+   Copy the report off the phone with
+   `xcrun devicectl device copy from --device <UDID> --domain-type appDataContainer --domain-identifier com.martinespericueta.slothroll --source Documents/eval-report.json --destination eval-report.json`.
+
+Logs: Console.app, filter subsystem `SlothRoll`, category `eval` (per-image timings and the
+run summary), `pipeline` (attempts, parse failures) or `inference`.
 
 ## Dev log
 
@@ -99,3 +126,28 @@ Logs: Console.app, filter subsystem `SlothRoll`, category `spike` (metrics) or `
   backed by `Features/Debug/PreviewVLM.swift` (canned answers, fake progress, placeholder
   screenshot). Previews never load MLX, so they work in the canvas. Added DEBUG-only
   `SpikeViewModel.setImageForPreview(_:)` because PhotosPicker can't run in previews.
+
+### 2026-10-20 (day 2): typed extraction + eval screen
+
+- Built: `ActionResult` schema with forgiving enums (unknown type → none, unknown confidence →
+  low, unknown currency → nil, Spanish type names accepted); bilingual `ExtractionPrompt`
+  with today plus the next 7 days spelled out (English/Spanish weekdays) and one JSON example;
+  `ResultParser` (first `{` to last `}`, falls back to the first balanced object, JSON5 for
+  trailing commas, validates date/time/amount, typed `PipelineError`); `Extractor` (one
+  stricter retry, then "Couldn't read this one", never throws); `Triage` (Vision fast OCR,
+  timing only for now); `PhotoLibrary`; debug `EvalView` replacing the spike, with
+  correct/wrong marks, summary, saved JSON report and a `-evalAutorun` launch argument.
+- Files added: `Models/{ActionResult,ActionType,Confidence,Currency}.swift`,
+  `Pipeline/*` (12 files), `Features/Debug/Eval*.swift`, `PreviewPhotoLibrary.swift`,
+  tests in `ParserTests/`, `PipelineTests/`, `FeaturesTests/EvalSummaryTests.swift`.
+  Removed: `SpikeView`, `SpikeViewModel`, `SpikeConfig`, `SpikeViewModelTests`.
+  Changed: `AppDependencies`, `RootView`, `Log`, `PreviewVLM`, `project.yml` (Photos usage
+  string), `.gitignore`.
+- Fixed: `.gitignore` had `models/`, which on macOS (case-insensitive) also ignored
+  `SlothRoll/Models/`, so `VLMServing.swift` was never committed. Now `/models/`.
+- Tests: 30 pass (simulator). Device build: no new warnings.
+- First device eval (iPhone 17 Pro): only 1 image reached the app. A party invite
+  ("5 de julio 2026, hora 19") came back as `none` with no title: wrong. Extraction 14.4 s
+  (first call after load, likely includes warm-up), OCR fast mode 0.24 s.
+- Known issues: eval sample is 1 image, so accuracy and triage are not measured yet; the
+  model may label past-dated events as none; `none` results may have an empty title.

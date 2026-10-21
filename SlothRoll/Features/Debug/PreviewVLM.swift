@@ -21,12 +21,15 @@ actor PreviewVLM: VLMServing {
             try await Task.sleep(for: delay / 4)
             continuation.yield(Double(step) / 4)
         }
-        if failLoad { throw InferenceError.loadFailed(reason: "preview") }
+        if failLoad { throw CancellationError() }
     }
 
     func describe(image: CGImage, prompt: String) async throws -> String {
         try await Task.sleep(for: delay)
-        return "A flyer for a jazz night at Blue Room on Friday at 9 PM. Contains an event."
+        return """
+            {"type":"event","title":"Noche de jazz","date":"2026-10-24","time":"21:00",\
+            "location":"Blue Room","amount":null,"currency":null,"confidence":"high"}
+            """
     }
 
     func unload() async {}

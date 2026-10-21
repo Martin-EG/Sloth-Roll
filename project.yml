@@ -36,6 +36,7 @@ targets:
       path: SlothRoll/Resources/Info.plist
       properties:
         CFBundleDisplayName: Sloth Roll
+        NSPhotoLibraryUsageDescription: Sloth Roll reads your screenshots on this iPhone to turn them into events, places, and expenses. Nothing leaves the device.
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false

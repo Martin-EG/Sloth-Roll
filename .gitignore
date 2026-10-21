@@ -15,4 +15,4 @@ xcuserdata/
 # Model weights
 *.safetensors
 *.gguf
-models/
+/models/

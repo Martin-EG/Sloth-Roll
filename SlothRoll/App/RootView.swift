@@ -1,21 +1,23 @@
 import SwiftUI
 
-/// Top-level screen switcher. Day 1: shows the model spike in debug builds.
+/// Top-level screen switcher. Day 2: shows the extraction eval screen in debug builds.
 struct RootView: View {
     let dependencies: AppDependencies
 
     #if DEBUG
-    @State private var spikeViewModel: SpikeViewModel
+    @State private var evalViewModel: EvalViewModel
 
     init(dependencies: AppDependencies) {
         self.dependencies = dependencies
-        _spikeViewModel = State(initialValue: SpikeViewModel(vlm: dependencies.vlm))
+        _evalViewModel = State(
+            initialValue: EvalViewModel(
+                vlm: dependencies.vlm, photoLibrary: dependencies.photoLibrary))
     }
     #endif
 
     var body: some View {
         #if DEBUG
-        SpikeView(viewModel: spikeViewModel)
+        EvalView(viewModel: evalViewModel)
         #else
         ContentUnavailableView("Sloth Roll", systemImage: "photo.stack", description: Text("Coming soon."))
         #endif
@@ -24,6 +26,6 @@ struct RootView: View {
 
 #if DEBUG
 #Preview {
-    RootView(dependencies: AppDependencies(vlm: PreviewVLM()))
+    RootView(dependencies: AppDependencies(vlm: PreviewVLM(), photoLibrary: PreviewPhotoLibrary()))
 }
 #endif
