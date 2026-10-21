@@ -18,10 +18,9 @@ struct PhotoLibrary: PhotoLibraryProviding {
         guard let album = albums.firstObject else { throw .albumNotFound(title) }
 
         let assetOptions = PHFetchOptions()
-        // Screenshots only: camera photos never hold an action, so they skip OCR and the model.
+        // Every image, camera photos included: a photo of a flyer is as useful as a screenshot.
         assetOptions.predicate = NSPredicate(
-            format: "mediaType == %d AND (mediaSubtypes & %d) != 0",
-            PHAssetMediaType.image.rawValue, PHAssetMediaSubtype.photoScreenshot.rawValue)
+            format: "mediaType == %d", PHAssetMediaType.image.rawValue)
         assetOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
         let assets = PHAsset.fetchAssets(in: album, options: assetOptions)
 
@@ -39,6 +38,10 @@ struct PhotoLibrary: PhotoLibraryProviding {
             let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
         else { return nil }
 
+        let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+        let origin = ImageSource(
+            isScreenshot: asset.mediaSubtypes.contains(.photoScreenshot), properties: properties)
+
         let thumbnailOptions: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
@@ -47,7 +50,8 @@ struct PhotoLibrary: PhotoLibraryProviding {
         let thumbnail = CGImageSourceCreateThumbnailAtIndex(
             source, 0, thumbnailOptions as CFDictionary)
         return LibraryImage(
-            assetID: assetID, image: image, thumbnail: thumbnail, capturedAt: asset.creationDate)
+            assetID: assetID, image: image, thumbnail: thumbnail, capturedAt: asset.creationDate,
+            source: origin)
     }
 
     private static func imageData(for asset: PHAsset) async -> Data? {

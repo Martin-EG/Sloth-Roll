@@ -7,6 +7,7 @@ struct EvalRow: Identifiable, Sendable {
     let assetID: String
     let thumbnail: CGImage?
     let capturedAt: Date?
+    let source: ImageSource
     let report: ExtractionReport
     let textScan: TextScan
     var mark: EvalMark?

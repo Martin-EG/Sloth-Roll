@@ -97,6 +97,7 @@ struct EvalRowView: View {
             "VLM \(seconds(row.report.duration))",
             "OCR \(seconds(row.textScan.duration))",
             "\(row.textScan.characterCount) chars",
+            row.source.rawValue,
         ]
         if row.report.attempts > 1 { parts.append("retried") }
         if row.report.usedFallback { parts.append("fallback") }

@@ -8,7 +8,7 @@ struct EvalSummaryTests {
         _ type: ActionType, seconds: Int, characters: Int, mark: EvalMark?, attempts: Int = 1
     ) -> EvalRow {
         EvalRow(
-            assetID: UUID().uuidString, thumbnail: nil, capturedAt: nil,
+            assetID: UUID().uuidString, thumbnail: nil, capturedAt: nil, source: .screenshot,
             report: ExtractionReport(
                 result: ActionResult(type: type, title: "t", confidence: .high),
                 attempts: attempts, rawOutputs: [], problems: [], usedFallback: false,

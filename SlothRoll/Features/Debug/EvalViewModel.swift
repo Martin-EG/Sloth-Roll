@@ -1,6 +1,7 @@
 #if DEBUG
 import Foundation
 import Observation
+import UIKit
 
 /// Drives the debug eval screen: load the model, run Triage + Extractor over every image in
 /// the test album, collect timings, and let a human mark each answer right or wrong.
@@ -71,7 +72,12 @@ final class EvalViewModel {
         errorMessage = nil
         skippedAssetIDs = []
         rows = []
-        defer { phase = .ready }
+        // Keep the screen on: a locked phone suspends the app and stalls timings by minutes.
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer {
+            UIApplication.shared.isIdleTimerDisabled = false
+            phase = .ready
+        }
 
         guard await photoLibrary.requestAccess() else {
             errorMessage = PipelineError.photoAccessDenied.localizedDescription
@@ -131,7 +137,7 @@ final class EvalViewModel {
         rows.append(
             EvalRow(
                 assetID: assetID, thumbnail: photo.thumbnail, capturedAt: photo.capturedAt,
-                report: report, textScan: scan, mark: mark))
+                source: photo.source, report: report, textScan: scan, mark: mark))
 
         Log.eval.info(
             """
@@ -140,7 +146,7 @@ final class EvalViewModel {
             extraction_s=\(report.duration.seconds, format: .fixed(precision: 2)) \
             attempts=\(report.attempts) fallback=\(report.usedFallback) \
             ocr_s=\(scan.duration.seconds, format: .fixed(precision: 3)) \
-            ocr_chars=\(scan.characterCount) title=\(report.result.title)
+            ocr_chars=\(scan.characterCount) source=\(photo.source.rawValue, privacy: .public) title=\(report.result.title)
             """)
     }
 

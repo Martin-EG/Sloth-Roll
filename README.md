@@ -1,3 +1,4 @@
+![Sloth Roll](public/sloth-roll-banner.png)
 # Sloth Roll
 
 ## Overview
@@ -29,7 +30,8 @@ screen to measure how well that works.
    output.
 
 **Eval screen (debug builds).** Tap **Load model**, then **Run eval**. The app reads every
-screenshot in the Photos album "Sloth Test" (camera photos and saved images are skipped), runs Apple's text recognition and then the model on
+image in the Photos album "Sloth Test" (screenshots, saved images, and camera photos; each
+row is labeled with its source), runs Apple's text recognition and then the model on
 each, and lists thumbnail, type, title, date, amount, and time taken. The summary shows
 counts per type, average times, retries, and accuracy. Use the menu on each row to mark it
 correct, or wrong and what it should have been. Marks are saved to
@@ -215,3 +217,25 @@ run summary), `pipeline` (attempts, parse failures) or `inference`.
 - Known issues: saved images (flyers from WhatsApp) are skipped by the screenshot filter;
   same image can get a different date between runs (temperature 0.2), e.g. "sábado"
   → 2026-10-24 last run, 2026-10-20 this run.
+
+### 2026-10-21 (day 2, cont.): all images back in, labeled by source
+
+- Changed course: the screenshots-only filter dropped a flyer saved from WhatsApp, and a
+  camera photo of a flyer would be dropped the same way. The album fetch now returns every
+  image again. New `Pipeline/ImageSource.swift` labels each one `screenshot` (Photos
+  subtype), `camera` (file has camera make/model/lens metadata), or `saved` (no camera
+  metadata, e.g. WhatsApp). The label is recorded per eval row; nothing is skipped by it.
+- Eval screen keeps the phone awake during a run (`isIdleTimerDisabled`), since stalls of
+  107-329 s hit OCR as well as the model, which points to the phone locking mid-run.
+- Files: `Pipeline/{ImageSource,LibraryImage,PhotoLibrary,PhotoLibraryProviding}.swift`,
+  `Features/Debug/{EvalRow,EvalReport,EvalRowView,EvalViewModel,PreviewPhotoLibrary}.swift`,
+  `SlothRollTests/PipelineTests/ImageSourceTests.swift`. 38 tests pass.
+- Eval (19 images: 14 screenshots, 2 saved, 3 camera): sources labeled correctly on all 19.
+  Type right 18/19 (Cinépolis purchase history still read as event). The saved Anuar flyer
+  is back and fully right (event, 2026-10-23 19:00, venue).
+- Triage (6 junk: 3 camera photos of kids, 1 saved meme, 2 chats): 0 OCR characters drops
+  2 of 6; under 20 characters drops 3 of 6 (all camera photos) and loses no real action
+  (shortest real one: 40). The meme (39) and chats need the model. Source alone is not a
+  safe filter.
+- Timing: median 7.8 s per image; mean 13.5 s because of one 119 s stall (before the
+  keep-awake fix, which hasn't been re-measured). OCR typically 0.02-0.15 s.

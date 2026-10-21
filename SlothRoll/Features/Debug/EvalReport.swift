@@ -7,6 +7,8 @@ struct EvalReport: Codable, Sendable {
     struct Row: Codable, Sendable {
         let assetID: String
         let capturedAt: Date?
+        /// Optional so older reports still load.
+        let source: ImageSource?
         let result: ActionResult
         let attempts: Int
         let usedFallback: Bool
@@ -22,7 +24,7 @@ struct EvalReport: Codable, Sendable {
 
     let modelID: String
     let createdAt: Date
-    /// Screenshots in the album, including ones that couldn't be loaded. Optional so reports
+    /// Images in the album, including ones that couldn't be loaded. Optional so reports
     /// saved before this field existed still load (and keep their marks).
     let albumCount: Int?
     /// Assets that couldn't be read from the device (usually iCloud-only originals).
@@ -30,8 +32,7 @@ struct EvalReport: Codable, Sendable {
     let rows: [Row]
 
     init(
-        modelID: String, createdAt: Date, albumCount: Int, skippedAssetIDs: [String],
-        rows: [EvalRow]
+        modelID: String, createdAt: Date, albumCount: Int, skippedAssetIDs: [String], rows: [EvalRow]
     ) {
         self.modelID = modelID
         self.createdAt = createdAt
@@ -41,6 +42,7 @@ struct EvalReport: Codable, Sendable {
             Row(
                 assetID: row.assetID,
                 capturedAt: row.capturedAt,
+                source: row.source,
                 result: row.report.result,
                 attempts: row.report.attempts,
                 usedFallback: row.report.usedFallback,

@@ -3,10 +3,10 @@ protocol PhotoLibraryProviding: Sendable {
     /// Asks for library access if needed. Returns true when reading is allowed.
     func requestAccess() async -> Bool
 
-    /// Local identifiers of the screenshots (not camera photos) in the album with this exact
-    /// title, oldest first.
+    /// Local identifiers of every image in the album with this exact title, oldest first.
     func assetIDs(inAlbum title: String) async throws(PipelineError) -> [String]
 
-    /// Loads one image from the device. Nil if it's missing or only in iCloud.
+    /// Loads one image from the device, with its `ImageSource`. Nil if it's missing or only
+    /// in iCloud.
     func loadImage(assetID: String) async -> LibraryImage?
 }
