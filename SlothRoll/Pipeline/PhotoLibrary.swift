@@ -5,9 +5,21 @@ import Photos
 
 /// Live PhotoKit implementation of `PhotoLibraryProviding`. Never downloads from iCloud.
 struct PhotoLibrary: PhotoLibraryProviding {
-    func requestAccess() async -> Bool {
-        let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
-        return status == .authorized || status == .limited
+    func requestAccess() async -> PhotoAccess {
+        switch await PHPhotoLibrary.requestAuthorization(for: .readWrite) {
+        case .authorized: .full
+        case .limited: .limited
+        default: .denied
+        }
+    }
+
+    func recentImageIDs(limit: Int) async -> [String] {
+        let options = PHFetchOptions()
+        options.predicate = Self.imagesOnly
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        options.fetchLimit = limit
+        // With limited access PhotoKit returns only the photos the user picked.
+        return Self.identifiers(of: PHAsset.fetchAssets(with: options))
     }
 
     func assetIDs(inAlbum title: String) async throws(PipelineError) -> [String] {
@@ -19,39 +31,53 @@ struct PhotoLibrary: PhotoLibraryProviding {
 
         let assetOptions = PHFetchOptions()
         // Every image, camera photos included: a photo of a flyer is as useful as a screenshot.
-        assetOptions.predicate = NSPredicate(
-            format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+        assetOptions.predicate = Self.imagesOnly
         assetOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
-        let assets = PHAsset.fetchAssets(in: album, options: assetOptions)
-
-        var ids: [String] = []
-        assets.enumerateObjects { asset, _, _ in ids.append(asset.localIdentifier) }
-        return ids
+        return Self.identifiers(of: PHAsset.fetchAssets(in: album, options: assetOptions))
     }
 
+    /// Reads the original file once: its metadata decides the `ImageSource`, and ImageIO
+    /// decodes straight to the downscaled sizes, so the full-size bitmap is never in memory.
     func loadImage(assetID: String) async -> LibraryImage? {
         guard
             let asset = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil)
                 .firstObject,
             let data = await Self.imageData(for: asset),
             let source = CGImageSourceCreateWithData(data as CFData, nil),
-            let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+            let image = Self.downscaled(source, maxPixels: PipelineConfig.modelImageMaxPixels)
         else { return nil }
 
         let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
         let origin = ImageSource(
             isScreenshot: asset.mediaSubtypes.contains(.photoScreenshot), properties: properties)
+        return LibraryImage(
+            assetID: assetID, image: image,
+            thumbnail: Self.downscaled(source, maxPixels: PipelineConfig.thumbnailMaxPixels),
+            capturedAt: asset.creationDate, source: origin)
+    }
 
-        let thumbnailOptions: [CFString: Any] = [
+    // MARK: - Private
+
+    private static var imagesOnly: NSPredicate {
+        NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+    }
+
+    private static func identifiers(of assets: PHFetchResult<PHAsset>) -> [String] {
+        var ids: [String] = []
+        ids.reserveCapacity(assets.count)
+        assets.enumerateObjects { asset, _, _ in ids.append(asset.localIdentifier) }
+        return ids
+    }
+
+    /// Never upscales: an image already under `maxPixels` comes back at its own size.
+    private static func downscaled(_ source: CGImageSource, maxPixels: Int) -> CGImage? {
+        let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
-            kCGImageSourceThumbnailMaxPixelSize: PipelineConfig.thumbnailMaxPixels,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixels,
         ]
-        let thumbnail = CGImageSourceCreateThumbnailAtIndex(
-            source, 0, thumbnailOptions as CFDictionary)
-        return LibraryImage(
-            assetID: assetID, image: image, thumbnail: thumbnail, capturedAt: asset.creationDate,
-            source: origin)
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 
     private static func imageData(for asset: PHAsset) async -> Data? {

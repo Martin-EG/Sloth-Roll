@@ -10,8 +10,25 @@ download.
 
 ## How it works
 
-Today (day 2) the app turns one screenshot into a checked, typed answer, and has a debug
-screen to measure how well that works.
+Today (day 3) you tap **Scan** and the app works through your newest images on its own,
+saving every answer on the phone. The swipe cards come next; for now the results show as a
+plain list grouped by type.
+
+1. **Find new images.** The app asks for Photos access (if you only allow some photos, it
+   scans those and says so). It looks at the newest 500 images and skips anything it has
+   already seen. Camera photos (files with camera make/model/lens info) are skipped and
+   remembered; screenshots and saved images (flyers from WhatsApp, images from Safari) go on.
+2. **Triage first, for up to 50 new images.** Apple's text recognition reads each one. If it
+   finds fewer than 20 characters, the image is marked skipped. No model is loaded yet.
+3. **Then the model.** The vision model loads once and reads only the images that passed
+   triage, one at a time, newest first. Each answer is saved right away: a real action
+   (event, place, receipt), "no action", or "couldn't read this one". Then the model is
+   unloaded to free about 2 GB.
+4. **Stop, pause, resume.** "Stop after this one" finishes the current image and keeps
+   everything so far. If iOS warns that memory is low, the app finishes the current image,
+   unloads the model, and pauses with a message. Tapping **Resume scan** picks up the images
+   that passed triage but weren't read yet.
+**Reading one image** (the extraction step):
 
 1. The app builds a prompt (Spanish + English) that includes the day the screenshot was
    taken (from Photos; today if unknown) and the seven days after it, with weekday names.
@@ -29,6 +46,9 @@ screen to measure how well that works.
    fails too, the screenshot is marked "Couldn't read this one". It never crashes on bad
    output.
 
+**Debug menu (debug builds).** The ladybug button opens the eval screen and can clear the
+scan cache (so the next scan redoes everything).
+
 **Eval screen (debug builds).** Tap **Load model**, then **Run eval**. The app reads every
 image in the Photos album "Sloth Test" (screenshots, saved images, and camera photos; each
 row is labeled with its source), runs Apple's text recognition and then the model on
@@ -43,34 +63,50 @@ correct, or wrong and what it should have been. Marks are saved to
 SlothRoll/
   App/         SlothRollApp (entry), AppDependencies (composition root), RootView
   Features/    one folder per screen (View + @Observable @MainActor ViewModel)
+    Scan/      ScanView, ScanViewModel, ScanStatsSection, ScanResultsSections (temporary
+               list by type, via @Query), ScanResultRow, ScanConfig
     Debug/     (DEBUG only) EvalView, EvalRowView, EvalViewModel, EvalRow, EvalMark,
                EvalSummary, EvalReport, EvalReportStore, EvalConfig,
                PreviewVLM + PreviewPhotoLibrary (fakes for SwiftUI previews)
-  Pipeline/    Extractor (VLM + parse + retry), ExtractionPrompt, ResultParser,
-               ExtractionReport, Triage (Vision OCR) + TextScan,
-               PhotoLibraryProviding + PhotoLibrary (PhotoKit) + LibraryImage,
-               PipelineError, PipelineConfig
+  Pipeline/    ScanCoordinator (@Observable @MainActor: triage pass, then extraction pass),
+               ScanStore (SwiftData reads/writes for the scan), ScanPhase, ScanStats,
+               Extractor (VLM + parse + retry), ExtractionPrompt, ResultParser,
+               ExtractionReport, ImageTriaging + Triage (Vision OCR, 20+ chars) + TextScan,
+               PhotoLibraryProviding + PhotoLibrary (PhotoKit) + PhotoAccess + LibraryImage
+               + ImageSource, PipelineError, PipelineConfig
   Inference/   VLMService (actor), ModelCatalog, InferenceConfig, InferenceError,
                HubDownloader + TransformersTokenizer(Loader) (mlx-swift-lm adapters)
   Actions/     (empty) EventKit / Maps / expense performers
   Models/      ActionResult, ActionType, Currency, Confidence, VLMServing (protocol)
-  Storage/     (empty) SwiftData models
+  Storage/     ScreenshotItem (@Model: assetID unique, status, skip reason, result JSON,
+               capturedAt, processedAt), Expense (@Model), ScanStatus, SkipReason,
+               Persistence (container; falls back to in-memory if the store won't open)
   Shared/      Log (os.Logger categories), MemoryProbe, Duration+Seconds
   Resources/   Assets, Info.plist, SlothRoll.entitlements
 SlothRollTests/
   ParserTests/     ResultParserTests
-  PipelineTests/   ExtractorTests (scripted fake VLM), ExtractionPromptTests
+  PipelineTests/   ExtractorTests (scripted fake VLM), ExtractionPromptTests,
+                   ImageSourceTests, ScanCoordinatorTests + ScanFakes
+  StorageTests/    ScreenshotItemTests
   FeaturesTests/   EvalSummaryTests
 ```
 
-Data flow for one screenshot:
+Data flow for a scan:
 
-`EvalView` → `EvalViewModel` → `PhotoLibrary` (loads the image) → `Triage` (OCR, timing
-only) → `Extractor` → `ExtractionPrompt` + `VLMServing` / `VLMService` (MLX on the GPU) →
-`ResultParser` → `ActionResult` (or the fallback) → row on screen + `eval-report.json`.
+`ScanView` → `ScanViewModel` → `ScanCoordinator.scan()`:
+`PhotoLibrary.recentImageIDs` (newest 500) minus `ScanStore.knownAssetIDs` →
+for each, `PhotoLibrary.loadImage` (1024 px + thumbnail + `ImageSource`) → camera? record
+skipped : `Triage.isCandidate` → `ScanStore.record` (triaged / skipped) → … up to 50 →
+`VLMServing.load()` → for each `triaged` item: `Extractor` → `ScanStore.complete`
+(extracted / skipped "none" / failed) → `VLMServing.unload()`. The list on screen reads
+SwiftData through `@Query`, so it updates as each item is saved.
 
-`AppDependencies.live` builds the one `VLMService` and hands it to the view model as a
-`VLMServing`, so features never import Inference and tests swap in a fake.
+Eval flow (debug): `EvalView` → `EvalViewModel` → `PhotoLibrary` → `Triage` (OCR, timing)
+→ `Extractor` → row on screen + `eval-report.json`.
+
+`AppDependencies.live` builds the one `VLMService`, the SwiftData container, and the
+`ScanCoordinator`, and hands services out as protocols (`VLMServing`, `PhotoLibraryProviding`,
+`ImageTriaging`), so features never import Inference and tests swap in a fake.
 
 Layer rules (dependencies point downward only) are listed in `CLAUDE.md`.
 
@@ -110,8 +146,14 @@ The Xcode project is generated from `project.yml` with XcodeGen. The generated
    Copy the report off the phone with
    `xcrun devicectl device copy from --device <UDID> --domain-type appDataContainer --domain-identifier com.martinespericueta.slothroll --source Documents/eval-report.json --destination eval-report.json`.
 
+9. Scan timing run (debug): launch with `-scanAutorun -scanReset` (clears the cache, then
+   scans). Stats land in `Documents/scan-stats.json`; copy them off with the same
+   `devicectl ... copy from` command as step 8, with `--source Documents/scan-stats.json`. Keep the phone
+   unlocked; the scan screen also keeps it awake while running.
+
 Logs: Console.app, filter subsystem `SlothRoll`, category `eval` (per-image timings and the
-run summary), `pipeline` (attempts, parse failures) or `inference`.
+run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory warnings),
+`storage`, `scan` or `inference`.
 
 ## Dev log
 
@@ -239,3 +281,38 @@ run summary), `pipeline` (attempts, parse failures) or `inference`.
   safe filter.
 - Timing: median 7.8 s per image; mean 13.5 s because of one 119 s stall (before the
   keep-awake fix, which hasn't been re-measured). OCR typically 0.02-0.15 s.
+
+### 2026-10-21 (day 3): scan pipeline, library to stored results
+
+- Built: SwiftData models (`ScreenshotItem`, `Expense`) and `Persistence`; `ScanCoordinator`
+  (skips cached assets, triages every new image before any model loads, then loads the
+  model and reads only candidates one at a time, saves each item immediately, progress
+  phase/done/total/thumbnail, cancel, pause on memory warning with model unload, resume picks
+  up triaged-but-unread items); `Triage.isCandidate` (Vision OCR, 20+ characters);
+  `PhotoLibrary.recentImageIDs` (newest first) and `PhotoAccess` (full / limited / denied);
+  `loadImage` now decodes straight to 1024 px (long side) plus thumbnail via ImageIO;
+  `ScanView` + `ScanViewModel` with a temporary results list by type and last-scan stats;
+  debug menu (eval screen as a sheet, clear scan cache); `-scanAutorun` / `-scanReset`.
+- Decisions: triage = OCR with 20 characters (day-2 numbers). Fetch = screenshots and saved
+  images, camera photos skipped (the screenshot-only filter lost a WhatsApp flyer on day 2).
+  Model is unloaded after every scan.
+- Files added: `Storage/{ScreenshotItem,Expense,ScanStatus,SkipReason,Persistence}.swift`,
+  `Pipeline/{ScanCoordinator,ScanStore,ScanPhase,ScanStats,PhotoAccess,ImageTriaging}.swift`,
+  `Features/Scan/{ScanView,ScanViewModel,ScanStatsSection,ScanResultsSections,ScanResultRow,
+  ScanConfig}.swift`, tests `PipelineTests/{ScanCoordinatorTests,ScanFakes}.swift`,
+  `StorageTests/ScreenshotItemTests.swift`. Changed: `App/*`, `Pipeline/{PhotoLibrary,
+  PhotoLibraryProviding,PipelineConfig,Triage,TextScan}.swift`, `Shared/Log.swift`,
+  `Features/Debug/{EvalView,EvalViewModel,EvalSummary,PreviewPhotoLibrary}.swift`,
+  `project.yml` unchanged (project regenerated with XcodeGen).
+- Tests: 47 pass (simulator). Device build: no new warnings.
+- Device run (iPhone 17 Pro, real library, cache cleared): 50 images triaged, 43 sent to the
+  model (19 actions, 24 none, 0 failed). Total 221 s: triage 33.9 s, model load 1.4 s,
+  reading 185.6 s (4.3 s per image). Peak memory 2.77 GB (footprint since launch); highest
+  sample between images 2.0 GB. No memory warning, no crash.
+- Known issues: the library's newest 500 images held 394 camera photos, and each is loaded
+  (and decoded to 1024 px) just to be skipped, which is most of the 33.9 s triage time; they
+  are cached as skipped, so the next scan doesn't repeat it. Triage only dropped 7 of 50
+  (status-bar text and chats pass 20 characters easily); the model answered "none" on 24.
+  OCR now runs on the 1024 px image (day-2 numbers were at full size), and the eval screen
+  now also gets 1024 px images. A scan unloads the shared model, so an open eval screen thinks
+  the model is still loaded (debug only).

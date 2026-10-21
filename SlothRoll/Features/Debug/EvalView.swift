@@ -87,9 +87,9 @@ struct EvalView: View {
             LabeledContent(
                 "Retries / fallbacks", value: "\(summary.retryCount) / \(summary.fallbackCount)")
             LabeledContent("Accuracy", value: accuracy(summary))
-            LabeledContent("No text (OCR)", value: "\(summary.noTextCount)")
+            LabeledContent("Under \(PipelineConfig.triageMinTextCharacters) chars (OCR)", value: "\(summary.noTextCount)")
             LabeledContent(
-                "Junk dropped by no-text",
+                "Junk dropped by triage",
                 value: "\(summary.junkWithoutText) of \(summary.markedJunkCount) marked")
             LabeledContent("Real actions lost", value: "\(summary.actionableWithoutText)")
         }

@@ -79,7 +79,7 @@ final class EvalViewModel {
             phase = .ready
         }
 
-        guard await photoLibrary.requestAccess() else {
+        guard await photoLibrary.requestAccess().canRead else {
             errorMessage = PipelineError.photoAccessDenied.localizedDescription
             return
         }

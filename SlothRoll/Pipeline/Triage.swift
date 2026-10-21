@@ -2,9 +2,18 @@ import CoreGraphics
 import Foundation
 import Vision
 
-/// Cheap pre-filter before the VLM: on-device OCR (Vision, fast mode) to see if a screenshot
-/// has any text at all.
-struct Triage: Sendable {
+/// Cheap pre-filter before the VLM: on-device OCR (Vision, fast mode). An image is a candidate
+/// when it has at least `PipelineConfig.triageMinTextCharacters` characters. No model to load
+/// or unload.
+struct Triage: ImageTriaging {
+    func isCandidate(_ image: CGImage) async -> Bool {
+        let scan = await scanText(in: image)
+        Log.pipeline.debug(
+            "triage chars=\(scan.characterCount) ocr_s=\(scan.duration.seconds, format: .fixed(precision: 3)) candidate=\(scan.hasText)"
+        )
+        return scan.hasText
+    }
+
     @concurrent
     func scanText(in image: CGImage) async -> TextScan {
         let clock = ContinuousClock()

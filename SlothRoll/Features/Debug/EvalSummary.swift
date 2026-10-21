@@ -1,5 +1,5 @@
 #if DEBUG
-/// Totals for an eval run: type counts, timings, accuracy, and how a "no text" triage would do.
+/// Totals for an eval run: type counts, timings, accuracy, and how the OCR triage would do.
 struct EvalSummary: Sendable, Equatable {
     let total: Int
     let countsByType: [ActionType: Int]
@@ -11,13 +11,13 @@ struct EvalSummary: Sendable, Equatable {
     let markedCount: Int
     let correctCount: Int
 
-    /// Rows OCR found no text in.
+    /// Rows OCR found too little text in (below the triage threshold).
     let noTextCount: Int
     /// Marked rows whose right answer is `.none` (junk).
     let markedJunkCount: Int
-    /// Junk rows a "no text" rule would drop.
+    /// Junk rows triage would drop.
     let junkWithoutText: Int
-    /// Real actions a "no text" rule would wrongly drop.
+    /// Real actions triage would wrongly drop.
     let actionableWithoutText: Int
 
     var accuracy: Double? {

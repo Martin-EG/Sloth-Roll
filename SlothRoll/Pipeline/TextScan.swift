@@ -8,5 +8,6 @@ struct TextScan: Sendable, Equatable {
     let text: String
     let duration: Duration
 
+    /// Enough text to pass triage.
     var hasText: Bool { characterCount >= PipelineConfig.triageMinTextCharacters }
 }

@@ -1,9 +1,13 @@
 #if DEBUG
-/// Fake album of placeholder screenshots so the eval screen previews without Photos access.
+/// Fake album of placeholder screenshots so screens preview without Photos access.
 struct PreviewPhotoLibrary: PhotoLibraryProviding {
     var imageCount = 3
 
-    func requestAccess() async -> Bool { true }
+    func requestAccess() async -> PhotoAccess { .full }
+
+    func recentImageIDs(limit: Int) async -> [String] {
+        Array((1...imageCount).map { "preview-\($0)" }.prefix(limit))
+    }
 
     func assetIDs(inAlbum title: String) async throws(PipelineError) -> [String] {
         (1...imageCount).map { "preview-\($0)" }
