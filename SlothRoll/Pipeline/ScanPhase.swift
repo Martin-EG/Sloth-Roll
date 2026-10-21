@@ -15,13 +15,16 @@ enum ScanPhase: Equatable, Sendable {
     case cancelled
     /// iOS warned about memory: the current item finished, the model was unloaded.
     case pausedForMemory
-    /// Couldn't start or load the model; `message` is user-facing.
-    case failed(message: String)
+    /// The user hasn't allowed Photos access; nothing can be scanned.
+    case noPhotoAccess
+    /// The model couldn't be downloaded or loaded; `message` is user-facing. Triage results
+    /// are kept, so a retry goes straight to the model.
+    case modelLoadFailed(message: String)
 
     var isRunning: Bool {
         switch self {
         case .preparing, .triage, .loadingModel, .extract: true
-        case .idle, .finished, .cancelled, .pausedForMemory, .failed: false
+        case .idle, .finished, .cancelled, .pausedForMemory, .noPhotoAccess, .modelLoadFailed: false
         }
     }
 }

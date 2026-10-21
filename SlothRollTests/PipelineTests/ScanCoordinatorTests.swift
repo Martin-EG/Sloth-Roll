@@ -120,14 +120,49 @@ struct ScanCoordinatorTests {
         #expect(await log.events.suffix(4) == ["load", "read 2", "read 3", "unload"])
     }
 
-    @Test func deniedAccessFailsWithAMessage() async {
+    @Test func deniedAccessStopsBeforeAnyWork() async {
         let coordinator = makeCoordinator(assets: assets(1...1), candidates: [], access: .denied)
+
+        await coordinator.scan()
+
+        #expect(coordinator.phase == .noPhotoAccess)
+        #expect(await log.events.isEmpty)
+    }
+
+    @Test func scanLimitArgumentOverridesTheDefault() async throws {
+        let coordinator = makeCoordinator(assets: assets(1...5), candidates: [], limit: 4)
+
+        await coordinator.scan(limit: 2)
+
+        #expect(try items().count == 2)
+    }
+
+    @Test func modelLoadFailureKeepsTriageAndRetriesStraightToTheModel() async throws {
+        let failing = FakeScanVLM(log: log, failsToLoad: true)
+        let coordinator = makeCoordinator(assets: assets(1...2), candidates: [1], vlm: failing)
 
         await coordinator.scan()
 
         #expect(
             coordinator.phase
-                == .failed(message: PipelineError.photoAccessDenied.localizedDescription))
-        #expect(await log.events.isEmpty)
+                == .modelLoadFailed(message: InferenceError.loadFailed(reason: "").localizedDescription))
+        #expect(try items()["a1"]?.status == .triaged)
+        #expect(!coordinator.isRunning)
+    }
+
+    @Test func resetCacheForgetsEverythingButDoneItems() async throws {
+        let coordinator = makeCoordinator(assets: assets(1...3), candidates: [1, 2])
+        await coordinator.scan()
+        let handled = try #require(items()["a1"])
+        handled.status = .done
+        try container.mainContext.save()
+
+        coordinator.resetCache()
+
+        #expect(Set(try items().keys) == ["a1"])
+        #expect(coordinator.phase == .idle)
+        await coordinator.scan()
+        #expect(await log.events.count(where: { $0 == "triage 2" }) == 2)
+        #expect(await log.events.count(where: { $0 == "triage 1" }) == 1)
     }
 }

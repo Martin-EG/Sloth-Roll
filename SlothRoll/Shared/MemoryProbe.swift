@@ -1,5 +1,4 @@
 import Darwin
-import os
 
 /// Reads this process's memory footprint (what iOS counts against the jetsam limit).
 enum MemoryProbe {
@@ -11,11 +10,6 @@ enum MemoryProbe {
     /// Highest physical footprint since launch, in bytes.
     static func peakFootprintBytes() -> UInt64? {
         vmInfo().map { UInt64(clamping: $0.ledger_phys_footprint_peak) }
-    }
-
-    /// Bytes the app can still allocate before hitting its limit.
-    static func availableBytes() -> UInt64 {
-        UInt64(os_proc_available_memory())
     }
 
     private static func vmInfo() -> task_vm_info_data_t? {

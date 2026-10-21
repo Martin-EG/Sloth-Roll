@@ -9,6 +9,7 @@ import os
 /// Owns the one loaded vision-language model: download, load, run, unload. No UI code.
 actor VLMService: VLMServing {
     nonisolated let modelID: String
+    nonisolated let downloadSizeBytes: Int64
     nonisolated let downloadProgress: AsyncStream<Double>
     private let progressContinuation: AsyncStream<Double>.Continuation
 
@@ -19,11 +20,33 @@ actor VLMService: VLMServing {
     private var container: ModelContainer?
     private var loadTask: Task<ModelContainer, any Error>?
 
-    init(configuration: ModelConfiguration = ModelCatalog.spike) {
+    init(
+        configuration: ModelConfiguration = ModelCatalog.extraction,
+        downloadSizeBytes: Int64 = ModelCatalog.extractionModelDownloadBytes
+    ) {
         self.configuration = configuration
         self.modelID = configuration.name
+        self.downloadSizeBytes = downloadSizeBytes
         (downloadProgress, progressContinuation) = AsyncStream.makeStream(
             of: Double.self, bufferingPolicy: .bufferingNewest(1))
+    }
+
+    func isDownloaded() async -> Bool {
+        guard case .id(let id, let revision) = configuration.id else { return true }
+        return await HubDownloader().cachedSnapshot(id: id, revision: revision) != nil
+    }
+
+    func download(progress: @escaping @Sendable (Double) -> Void) async throws {
+        do {
+            try HubDownloader.prepareCacheDirectory()
+            _ = try await MLXLMCommon.resolve(
+                configuration: configuration, from: HubDownloader(), useLatest: false
+            ) { progress($0.fractionCompleted) }
+            logger.info("Downloaded \(self.modelID, privacy: .public)")
+        } catch {
+            logger.error("Download failed: \(error.localizedDescription, privacy: .public)")
+            throw InferenceError.downloadFailed(reason: error.localizedDescription)
+        }
     }
 
     func load() async throws {

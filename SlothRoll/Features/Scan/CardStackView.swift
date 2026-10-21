@@ -2,16 +2,22 @@ import SwiftData
 import SwiftUI
 
 /// Stack of results waiting for review, newest first. Swipe right (or tap the action button)
-/// to run the action, left (or Skip) to skip; tap a card to fix it first.
+/// to run the action, left (or Skip) to skip; tap a card to fix it first. A light tap on each
+/// swipe, a success buzz when the action is done.
 struct CardStackView: View {
     @Bindable var viewModel: CardStackViewModel
+    /// A scan is running: the empty state says cards are on the way.
+    let isScanning: Bool
 
     @Query private var items: [ScreenshotItem]
     @State private var drag: CGSize = .zero
     @State private var editing: ScreenshotItem?
+    /// Goes up on every committed swipe, for the light impact haptic.
+    @State private var commitCount = 0
 
-    init(viewModel: CardStackViewModel) {
+    init(viewModel: CardStackViewModel, isScanning: Bool) {
         self.viewModel = viewModel
+        self.isScanning = isScanning
         let extracted = ScanStatus.extracted.rawValue
         _items = Query(
             filter: #Predicate { $0.statusRaw == extracted },
@@ -28,6 +34,12 @@ struct CardStackView: View {
                     buttons(for: top)
                 }
                 .padding()
+            } else if isScanning {
+                ContentUnavailableView {
+                    ProgressView()
+                } description: {
+                    Text("Reading your screenshots. Cards show up here as they're found.")
+                }
             } else {
                 ContentUnavailableView(
                     "Nothing to do. Very sloth.", systemImage: "leaf",
@@ -35,6 +47,8 @@ struct CardStackView: View {
             }
         }
         .toast($viewModel.toast, duration: ScanConfig.toastDuration)
+        .sensoryFeedback(.impact(weight: .light), trigger: commitCount)
+        .sensoryFeedback(.success, trigger: viewModel.completedCount)
         .sheet(item: $editing) { item in
             if let result = item.result {
                 EditSheet(result: result) { viewModel.save($0, for: item) }
@@ -90,16 +104,15 @@ struct CardStackView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.green)
         }
         .controlSize(.large)
         .disabled(viewModel.isPerforming)
     }
 
-    /// Green toward "do it", red toward "skip", strongest at the swipe threshold.
+    /// Accent green toward "do it", red toward "skip", strongest at the swipe threshold.
     private var tint: some View {
         let progress = min(abs(drag.width) / ScanConfig.swipeThreshold, 1)
-        return (drag.width > 0 ? Color.green : Color.red)
+        return (drag.width > 0 ? Color.accentColor : Color.red)
             .opacity(progress * ScanConfig.maxTintOpacity)
             .allowsHitTesting(false)
     }
@@ -123,6 +136,7 @@ struct CardStackView: View {
     /// Flies the card off, then runs or skips it. A failed action springs the card back.
     private func commit(_ item: ScreenshotItem, accept: Bool) {
         guard !viewModel.isPerforming else { return }
+        commitCount += 1
         let direction: CGFloat = accept ? 1 : -1
         withAnimation(.easeIn(duration: ScanConfig.flyOutSeconds)) {
             drag = CGSize(width: direction * ScanConfig.flyOutDistance, height: drag.height)

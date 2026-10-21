@@ -13,6 +13,11 @@ private actor ScriptedVLM: VLMServing {
 
     nonisolated let modelID = "fake/scripted"
     nonisolated let downloadProgress = AsyncStream<Double> { $0.finish() }
+    nonisolated let downloadSizeBytes: Int64 = 0
+
+    func isDownloaded() async -> Bool { true }
+
+    func download(progress: @escaping @Sendable (Double) -> Void) async throws {}
 
     private var answers: [Answer]
     private(set) var prompts: [String] = []

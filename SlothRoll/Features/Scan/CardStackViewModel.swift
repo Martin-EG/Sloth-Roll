@@ -12,6 +12,8 @@ final class CardStackViewModel {
     var toast: Toast?
     /// True while an action runs; the stack ignores swipes until it's done.
     private(set) var isPerforming = false
+    /// Goes up each time an action finishes, so the view can play a success haptic.
+    private(set) var completedCount = 0
 
     private let performers: [ActionType: any ActionPerformer]
     private let photoLibrary: any PhotoLibraryProviding
@@ -41,6 +43,7 @@ final class CardStackViewModel {
         do {
             let outcome = try await performer.perform(result, assetID: item.assetID)
             finish(item, as: .done)
+            completedCount += 1
             toast = Toast(message: outcome.message, isError: false)
             Log.scan.info("card_done type=\(result.type.rawValue, privacy: .public)")
             return true

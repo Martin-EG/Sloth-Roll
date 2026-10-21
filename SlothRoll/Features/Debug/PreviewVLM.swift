@@ -4,6 +4,7 @@ import CoreGraphics
 /// Canned stand-in for the VLM so SwiftUI previews render without MLX or a download.
 actor PreviewVLM: VLMServing {
     nonisolated let modelID = "preview/fake-vlm"
+    nonisolated let downloadSizeBytes: Int64 = 1_798_023_774
     nonisolated let downloadProgress: AsyncStream<Double>
     private let continuation: AsyncStream<Double>.Continuation
 
@@ -14,6 +15,16 @@ actor PreviewVLM: VLMServing {
         self.delay = delay
         self.failLoad = failLoad
         (downloadProgress, continuation) = AsyncStream.makeStream(of: Double.self)
+    }
+
+    func isDownloaded() async -> Bool { false }
+
+    func download(progress: @escaping @Sendable (Double) -> Void) async throws {
+        for step in 1...10 {
+            try await Task.sleep(for: delay / 10)
+            progress(Double(step) / 10)
+        }
+        if failLoad { throw CancellationError() }
     }
 
     func load() async throws {

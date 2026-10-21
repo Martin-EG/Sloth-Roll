@@ -68,19 +68,26 @@ struct FakeTriage: ImageTriaging {
     }
 }
 
-/// Answers with the JSON for the image's width (or a fixed event), logs every call, and can
-/// run a hook during the first read.
+/// Answers with the JSON for the image's width (or a fixed event), logs every call, can
+/// run a hook during the first read, and can fail to load.
 actor FakeScanVLM: VLMServing {
     nonisolated let modelID = "fake/scan"
     nonisolated let downloadProgress = AsyncStream<Double> { $0.finish() }
+    nonisolated let downloadSizeBytes: Int64 = 0
+
+    func isDownloaded() async -> Bool { true }
+
+    func download(progress: @escaping @Sendable (Double) -> Void) async throws {}
 
     private let log: ScanEventLog
     private let answers: [Int: String]
+    private let failsToLoad: Bool
     private var firstReadHook: (@Sendable () async -> Void)?
 
-    init(log: ScanEventLog, answers: [Int: String] = [:]) {
+    init(log: ScanEventLog, answers: [Int: String] = [:], failsToLoad: Bool = false) {
         self.log = log
         self.answers = answers
+        self.failsToLoad = failsToLoad
     }
 
     func setFirstReadHook(_ hook: @escaping @Sendable () async -> Void) {
@@ -89,6 +96,7 @@ actor FakeScanVLM: VLMServing {
 
     func load() async throws {
         await log.append("load")
+        if failsToLoad { throw InferenceError.loadFailed(reason: "test") }
     }
 
     func describe(image: CGImage, prompt: String) async throws -> String {

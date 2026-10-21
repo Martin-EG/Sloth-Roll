@@ -4,7 +4,6 @@ import os
 enum Log {
     static let subsystem = "SlothRoll"
 
-    static let app = Logger(subsystem: subsystem, category: "app")
     /// Extraction attempts, parse failures, OCR errors, scan progress and timings.
     static let pipeline = Logger(subsystem: subsystem, category: "pipeline")
     /// SwiftData store open and save failures.
@@ -13,6 +12,10 @@ enum Log {
     static let scan = Logger(subsystem: subsystem, category: "scan")
     /// Calendar, Maps, and expense actions: results and failures (no event contents).
     static let actions = Logger(subsystem: subsystem, category: "actions")
+    /// First-launch screens and the model download.
+    static let onboarding = Logger(subsystem: subsystem, category: "onboarding")
+    /// Settings screen: scan limit and rescan.
+    static let settings = Logger(subsystem: subsystem, category: "settings")
     /// Expenses screen.
     static let expenses = Logger(subsystem: subsystem, category: "expenses")
     /// Debug eval screen: per-image timings and the run summary.

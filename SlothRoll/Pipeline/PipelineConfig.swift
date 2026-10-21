@@ -21,8 +21,11 @@ enum PipelineConfig {
     /// Longest side, in pixels, of the image handed to OCR and the model.
     static let modelImageMaxPixels = 1024
 
-    /// New images (screenshots and saved images) triaged per scan.
+    /// New images (screenshots and saved images) triaged per scan, unless Settings says otherwise.
     static let scanLimit = 50
+
+    /// Choices for the per-scan limit in Settings.
+    static let scanLimitOptions = [25, 50, 100]
 
     /// Newest library images looked at per scan; already-seen and camera photos are skipped
     /// inside this window, so it bounds the work when the library is mostly camera photos.

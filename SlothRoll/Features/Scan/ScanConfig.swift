@@ -12,6 +12,7 @@ enum ScanConfig {
     static let statsFileName = "scan-stats.json"
 
     static let thumbnailSize = CGSize(width: 54, height: 96)
+    static let thumbnailCornerRadius: CGFloat = 6
 
     // MARK: Card stack
 

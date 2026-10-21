@@ -1,6 +1,7 @@
+#if DEBUG
 import SwiftUI
 
-/// Counts, timings, and peak memory of the last scan.
+/// Debug: counts, timings, and peak memory of the last scan.
 struct ScanStatsSection: View {
     let stats: ScanStats
 
@@ -38,3 +39,4 @@ struct ScanStatsSection: View {
         value.formatted(.number.precision(.fractionLength(1))) + " s"
     }
 }
+#endif

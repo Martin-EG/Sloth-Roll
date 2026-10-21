@@ -50,10 +50,11 @@ struct ScanStore {
         save()
     }
 
-    /// Debug: forget every scanned item so the next scan starts from zero.
-    func deleteAllItems() {
+    /// Forgets every scanned item except `done` ones, so the next scan reads them again.
+    func deleteItemsNotDone() {
+        let done = ScanStatus.done.rawValue
         do {
-            try context.delete(model: ScreenshotItem.self)
+            try context.delete(model: ScreenshotItem.self, where: #Predicate { $0.statusRaw != done })
         } catch {
             Log.storage.error("delete_failed error=\(String(describing: error), privacy: .public)")
         }

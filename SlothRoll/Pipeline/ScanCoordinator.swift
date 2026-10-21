@@ -52,9 +52,9 @@ final class ScanCoordinator {
         }
     }
 
-    /// Scans the newest `limit` new images. Safe to call again after a stop or pause: cached
-    /// images are skipped and triaged-but-unread ones are picked up first.
-    func scan() async {
+    /// Scans the newest `limit` new images (the init's limit when nil). Safe to call again after
+    /// a stop or pause: cached images are skipped and triaged-but-unread ones are picked up first.
+    func scan(limit: Int? = nil) async {
         guard !isRunning else { return }
         stopRequest = nil
         let clock = ContinuousClock()
@@ -66,11 +66,11 @@ final class ScanCoordinator {
         let access = await photoLibrary.requestAccess()
         self.access = access
         guard access.canRead else {
-            phase = .failed(message: PipelineError.photoAccessDenied.localizedDescription)
+            phase = .noPhotoAccess
             return
         }
 
-        await runTriage(stats: &stats, clock: clock)
+        await runTriage(stats: &stats, limit: limit ?? self.limit, clock: clock)
         if stopRequest == nil {
             await runExtraction(stats: &stats, clock: clock)
         }
@@ -80,7 +80,7 @@ final class ScanCoordinator {
         stats.peakFootprintBytes = MemoryProbe.peakFootprintBytes()
         lastStats = stats
         log(stats)
-        if case .failed = phase { return }
+        if case .modelLoadFailed = phase { return }
         phase =
             switch stopRequest {
             case .cancel: .cancelled
@@ -102,10 +102,11 @@ final class ScanCoordinator {
         stopRequest = .memoryWarning
     }
 
-    /// Debug: forget all scanned items so the next scan redoes them.
+    /// "Rescan everything": forget every scanned item except the ones whose action already ran,
+    /// so the next scan reads them again without re-adding an event or expense.
     func resetCache() {
         guard !isRunning else { return }
-        store.deleteAllItems()
+        store.deleteItemsNotDone()
         lastStats = nil
         phase = .idle
     }
@@ -114,7 +115,7 @@ final class ScanCoordinator {
 
     /// OCR on every new image before any model is loaded. Camera photos are recorded as
     /// skipped and don't count toward `limit`.
-    private func runTriage(stats: inout ScanStats, clock: ContinuousClock) async {
+    private func runTriage(stats: inout ScanStats, limit: Int, clock: ContinuousClock) async {
         let start = clock.now
         let known = store.knownAssetIDs()
         let fresh = await photoLibrary.recentImageIDs(limit: PipelineConfig.libraryScanWindow)
@@ -162,7 +163,7 @@ final class ScanCoordinator {
             try await vlm.load()
         } catch {
             Log.pipeline.error("scan_model_load_failed error=\(String(describing: error), privacy: .public)")
-            phase = .failed(message: error.localizedDescription)
+            phase = .modelLoadFailed(message: error.localizedDescription)
             return
         }
         stats.modelLoadSeconds = loadStart.duration(to: clock.now).seconds

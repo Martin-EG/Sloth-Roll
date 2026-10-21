@@ -10,21 +10,37 @@ download.
 
 ## How it works
 
-Today (day 4) the app has two tabs. On **Scan** you tap **Scan** and the app works through
+Today (day 5) a fresh install walks you through three short screens, downloads the model
+once, and then opens on three tabs. On **Scan** you tap **Scan** and the app works through
 your newest images on its own, saving every answer on the phone. Each screenshot with an
 action becomes a card; you swipe right to do it, left to skip. **Expenses** lists the
-receipts you kept, with a total per currency.
+receipts you kept, with a total per currency. **Settings** sets how many screenshots a scan
+reads, can start over from scratch, and says which model runs on the phone.
 
+0. **First launch.** Two intro screens ("You take screenshots. Sloth Roll does the rest.",
+   "Everything runs on your iPhone. Nothing is uploaded."), then the model screen: it shows
+   the size (1.8 GB), recommends Wi-Fi, and has a **Download** button. While it downloads
+   you see a progress bar with "640 MB of 1.8 GB" and the screen stays awake. If it fails
+   (no connection, no space) you get a plain message and **Retry**. When it's done, **Start**
+   opens the app, and the app remembers that onboarding is finished. If the model is already
+   on the phone (reinstall that kept data), the screen goes straight to **Start**. The model
+   files are kept out of iCloud backups.
 1. **Find new images.** The app asks for Photos access (if you only allow some photos, it
-   scans those and says so). It looks at the newest 500 images and skips anything it has
+   scans those and says so). If access is off, the Scan tab shows "Photos access is off"
+   with **Open Settings** (jumps to the app's page in iOS Settings) and **Check again**. It looks at the newest 500 images and skips anything it has
    already seen. Camera photos (files with camera make/model/lens info) are skipped and
    remembered; screenshots and saved images (flyers from WhatsApp, images from Safari) go on.
-2. **Triage first, for up to 50 new images.** Apple's text recognition reads each one. If it
+2. **Triage first, for up to 50 new images** (25, 50, or 100, picked in Settings). Apple's text recognition reads each one. If it
    finds fewer than 20 characters, the image is marked skipped. No model is loaded yet.
 3. **Then the model.** The vision model loads once and reads only the images that passed
    triage, one at a time, newest first. Each answer is saved right away: a real action
    (event, place, receipt), "no action", or "couldn't read this one". Then the model is
-   unloaded to free about 2 GB.
+   unloaded to free about 2 GB. While the scan runs and no cards exist yet, the card area
+   says "Reading your screenshots." If the model can't load, an orange message says why,
+   the button turns into **Try again**, and the images that passed triage wait for it.
+   When a scan ends, one line says what happened: "Found 3 new cards.", "No events,
+   places, or receipts in the new screenshots.", or "No new screenshots since the last
+   scan."
 4. **Stop, pause, resume.** "Stop after this one" finishes the current image and keeps
    everything so far. If iOS warns that memory is low, the app finishes the current image,
    unloads the model, and pauses with a message. Tapping **Resume scan** picks up the images
@@ -33,8 +49,9 @@ receipts you kept, with a total per currency.
    first: the screenshot, an Event / Place / Receipt badge, the title, and what will happen
    in plain words ("Add event · Sat 25 Oct, 18:00 · Teatro del Estado"). Cards the model
    marked low confidence carry a small "not sure" tag.
-   - **Swipe right** (or tap the green button): the card tilts and turns green, then the
-     action runs. A short message says what happened ("Added to Calendar: Feria del Libro,
+   - **Swipe right** (or tap the green button): the card tilts and turns sloth green, then
+     the action runs. The phone gives a light tap on every swipe and a success buzz when
+     the action is done. A short message says what happened ("Added to Calendar: Feria del Libro,
      Sat 25 Oct") and the card is marked done.
    - **Swipe left** (or **Skip**): the card turns red and is marked skipped. It never comes
      back.
@@ -69,9 +86,13 @@ receipts you kept, with a total per currency.
    fails too, the screenshot is marked "Couldn't read this one". It never crashes on bad
    output.
 
-**Debug menu (debug builds).** The ladybug button on the Scan tab opens the eval screen,
-shows the last scan's stats (counts, timings, peak memory), and can clear the scan cache
-(so the next scan redoes everything; saved expenses stay).
+**Settings.** "Screenshots per scan" (25 / 50 / 100, default 50). **Rescan everything**
+asks first, then forgets what the app read so the next scan reads your screenshots again;
+cards you already did stay done (no duplicate events or expenses) and expenses are kept.
+The model section shows the model ID, its size, whether it's on the phone, and "Runs
+on-device. Nothing is uploaded." Debug builds add a **Debug** section: the eval screen,
+**Show onboarding again** (for rehearsing the demo), and the last scan's stats (counts,
+timings, peak memory).
 
 **Eval screen (debug builds).** Tap **Load model**, then **Run eval**. The app reads every
 image in the Photos album "Sloth Test" (screenshots, saved images, and camera photos; each
@@ -86,15 +107,21 @@ correct, or wrong and what it should have been. Marks are saved to
 ```
 SlothRoll/
   App/         SlothRollApp (entry), AppDependencies (composition root, builds the action
-               performers), RootView (TabView: Scan, Expenses; debug menu)
+               performers), RootView (onboarding until done, then TabView: Scan,
+               Expenses, Settings; hosts the debug eval sheet)
   Features/    one folder per screen (View + @Observable @MainActor ViewModel)
+    Onboarding/ OnboardingView (paged: 2 intro pages + download), OnboardingPage,
+               ModelDownloadView, OnboardingViewModel (check / download / retry),
+               ModelDownloadState, OnboardingConfig
     Scan/      ScanView (scan button + progress + card stack), ScanViewModel,
-               CardStackView (@Query of `extracted` items, drag/buttons, tint, rotation),
-               CardView, CardStackViewModel (perform / skip / edit / card images, toast),
-               EditSheet, CardText (plain-words proposal), TypeBadge, ScanStatsSection
-               (debug sheet), ScanConfig
+               CardStackView (@Query of `extracted` items, drag/buttons, tint, rotation,
+               haptics), CardView, CardStackViewModel (perform / skip / edit / card
+               images, toast), EditSheet, CardText (plain-words proposal + SF Symbol per
+               type), TypeBadge, ScanConfig
     Expenses/  ExpenseListView (@Query of expenses, totals on top), ExpensesViewModel,
                CurrencyTotal
+    Settings/  SettingsView (scan limit, rescan, model info, debug section),
+               SettingsViewModel, ScanStatsSection (DEBUG only)
     Debug/     (DEBUG only) EvalView, EvalRowView, EvalViewModel, EvalRow, EvalMark,
                EvalSummary, EvalReport, EvalReportStore, EvalConfig,
                PreviewVLM + PreviewPhotoLibrary (fakes for SwiftUI previews)
@@ -104,7 +131,8 @@ SlothRoll/
                ExtractionReport, ImageTriaging + Triage (Vision OCR, 20+ chars) + TextScan,
                PhotoLibraryProviding + PhotoLibrary (PhotoKit) + PhotoAccess + LibraryImage
                + ImageSource, PipelineError, PipelineConfig
-  Inference/   VLMService (actor), ModelCatalog, InferenceConfig, InferenceError,
+  Inference/   VLMService (actor: isDownloaded / download / load / describe / unload),
+               ModelCatalog, InferenceConfig, InferenceError,
                HubDownloader + TransformersTokenizer(Loader) (mlx-swift-lm adapters)
   Actions/     ActionPerformer (protocol), EventAction (actor, EventKit write-only) +
                EventDraft, PlaceAction (MKLocalSearch, maps:// fallback), ReceiptAction
@@ -115,8 +143,9 @@ SlothRoll/
                capturedAt, processedAt), Expense (@Model), ScanStatus, SkipReason,
                Persistence (container; falls back to in-memory if the store won't open)
   Shared/      Log (os.Logger categories), MemoryProbe, Duration+Seconds, Toast +
-               ToastOverlay (`.toast(_:duration:)`)
-  Resources/   Assets, Info.plist, SlothRoll.entitlements
+               ToastOverlay (`.toast(_:duration:)`), SettingsKey (@AppStorage keys)
+  Resources/   Assets (AppIcon, AccentColor sloth green light/dark, SlothMark logo),
+               Info.plist, SlothRoll.entitlements
 SlothRollTests/
   ParserTests/     ResultParserTests
   PipelineTests/   ExtractorTests (scripted fake VLM), ExtractionPromptTests,
@@ -124,24 +153,38 @@ SlothRollTests/
   StorageTests/    ScreenshotItemTests
   ActionsTests/    EventDraftTests, ReceiptActionTests, PlaceActionTests
   FeaturesTests/   EvalSummaryTests, CardStackViewModelTests (fake performer),
-                   CardTextTests, ExpensesViewModelTests
+                   CardTextTests, ExpensesViewModelTests, OnboardingViewModelTests,
+                   ScanViewModelTests
 ```
+
+Data flow on first launch:
+
+`RootView` (`@AppStorage hasCompletedOnboarding` false) → `OnboardingView` →
+`OnboardingViewModel.checkExistingDownload()` → `VLMServing.isDownloaded()` (local cache
+only) → **Download** → `VLMServing.download(progress:)` → `VLMService` →
+`MLXLMCommon.resolve` + `HubDownloader` (weights to Application Support, excluded from
+backup; nothing loaded into memory) → **Start** sets the flag → tabs.
 
 Data flow for a scan:
 
-`ScanView` → `ScanViewModel` → `ScanCoordinator.scan()`:
+`ScanView` (reads the limit from `@AppStorage`) → `ScanViewModel.scan(limit:)` →
+`ScanCoordinator.scan(limit:)`:
 `PhotoLibrary.recentImageIDs` (newest 500) minus `ScanStore.knownAssetIDs` →
 for each, `PhotoLibrary.loadImage` (1024 px + thumbnail + `ImageSource`) → camera? record
-skipped : `Triage.isCandidate` → `ScanStore.record` (triaged / skipped) → … up to 50 →
+skipped : `Triage.isCandidate` → `ScanStore.record` (triaged / skipped) → … up to the limit →
 `VLMServing.load()` → for each `triaged` item: `Extractor` → `ScanStore.complete`
 (extracted / skipped "none" / failed) → `VLMServing.unload()`. The card stack reads
-`extracted` items through `@Query`, so new cards appear as each item is saved.
+`extracted` items through `@Query`, so new cards appear as each item is saved. No Photos
+access ends in `ScanPhase.noPhotoAccess`; a failed load in `.modelLoadFailed(message:)`.
+**Rescan everything**: `SettingsViewModel` → `ScanCoordinator.resetCache()` →
+`ScanStore.deleteItemsNotDone()`.
 
 Data flow for a swipe:
 
 `CardStackView` (drag past 110 pt, or a button) → `CardStackViewModel.perform(item)` →
 `AppDependencies.actionPerformers[type]` (`EventAction` / `PlaceAction` / `ReceiptAction`,
-all behind `ActionPerformer`) → `ActionOutcome` → item `done` + toast. A thrown
+all behind `ActionPerformer`) → `ActionOutcome` → item `done` + toast + success haptic
+(`completedCount`; the view also plays a light impact on every committed swipe). A thrown
 `ActionError` keeps the item `extracted` and shows its message. Skip → item `skipped`.
 `EditSheet` → `CardStackViewModel.save(_:for:)` rewrites the item's result.
 `ExpenseListView` reads `Expense` through `@Query`; `ExpensesViewModel` sums per currency.
@@ -177,9 +220,14 @@ The Xcode project is generated from `project.yml` with XcodeGen. The generated
 4. Run on a physical iPhone (MLX does not run in the Simulator). On first install, trust the
    developer profile on the phone: Settings → General → VPN & Device Management.
    Developer Mode must be on.
-5. Keep the phone on Wi-Fi for the first **Load model** (~1.8 GB download). The model is
-   stored in Application Support, so iOS won't purge it.
-6. If `project.yml` changes: `brew install xcodegen && xcodegen generate`.
+5. Keep the phone on Wi-Fi for the first launch: the last onboarding screen downloads the
+   model (~1.8 GB). It's stored in Application Support (iOS won't purge it) and excluded
+   from iCloud backup. To see onboarding again on a debug build: Settings tab → Debug →
+   **Show onboarding again** (the model stays downloaded, so it goes straight to Start).
+   For a true fresh-install demo, delete the app first.
+6. If `project.yml` changes: `brew install xcodegen && xcodegen generate`. The app's
+   accent color comes from `ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor`
+   in `project.yml`; without it buttons fall back to system blue.
 
 7. Photos: the app asks for library access on the first **Run eval**
    (`NSPhotoLibraryUsageDescription` is set in `project.yml` / `Info.plist`). Choose
@@ -196,14 +244,15 @@ The Xcode project is generated from `project.yml` with XcodeGen. The generated
    the app asks for add-only access). If you deny it, turn it on in Settings › Apps ›
    Sloth Roll › Calendars.
 
-10. Scan timing run (debug): launch with `-scanAutorun -scanReset` (clears the cache, then
-   scans). Stats land in `Documents/scan-stats.json`; copy them off with the same
+10. Scan timing run (debug): launch with `-scanAutorun -scanReset` (clears the cache except
+   cards already done, then scans). Autorun arguments (`-scanAutorun`, `-evalAutorun`)
+   skip onboarding. Stats land in `Documents/scan-stats.json`; copy them off with the same
    `devicectl ... copy from` command as step 8, with `--source Documents/scan-stats.json`. Keep the phone
    unlocked; the scan screen also keeps it awake while running.
 
 Logs: Console.app, filter subsystem `SlothRoll`, category `eval` (per-image timings and the
 run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory warnings),
-`storage`, `scan` or `inference`.
+`storage`, `scan`, `onboarding`, `settings`, or `inference`.
 
 ## Dev log
 
@@ -396,3 +445,41 @@ run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory 
   rule (the user asked for it; Maps itself needs the network anyway). Event dates use the
   phone's current time zone. The edit sheet can't change the type (a receipt read as an
   event stays an event). Cards for screenshots deleted from Photos show a blank image.
+
+### 2026-10-21 (day 5): demo-ready fresh install
+
+- Built: first-launch onboarding (two intro pages + model download screen with size,
+  Wi-Fi hint, progress in MB, retry, Start; completion in `@AppStorage`). Download-only
+  path in the Inference layer (`VLMServing.isDownloaded()` / `download(progress:)`, via
+  `MLXLMCommon.resolve`, no model load); model cache excluded from iCloud backup. Scan
+  states: "reading your screenshots" while cards are pending, a result line after each
+  scan (new cards / nothing to do / no new screenshots), a full-screen Photos-denied view
+  with Open Settings, and a model-failed message with **Try again**. Settings tab: scan
+  limit 25/50/100, Rescan everything (with confirmation; keeps `done` items so actions
+  never repeat), model ID/size/status, "Runs on-device", debug section (eval screen, show
+  onboarding again, last scan stats; the ladybug menu is gone). Branding: sloth-green
+  accent (light #4A7A50, dark #4F8455; white text passes contrast in both), wired through
+  the build setting, SlothMark logo on page one, green swipe tint and action button. Haptics:
+  light impact on every committed swipe, success when an action finishes.
+- Cleanup: renamed `ModelCatalog.spike*` to `extraction*`; removed unused
+  `MemoryProbe.availableBytes` and `Log.app`; replaced `ScanPhase.failed(message:)` with
+  typed `.noPhotoAccess` and `.modelLoadFailed(message:)`. No `print()` in the app.
+- Files added: `Features/Onboarding/{OnboardingView,OnboardingPage,ModelDownloadView,
+  OnboardingViewModel,ModelDownloadState,OnboardingConfig}.swift`,
+  `Features/Settings/{SettingsView,SettingsViewModel}.swift`, `Shared/SettingsKey.swift`,
+  `Assets.xcassets/SlothMark.imageset`, tests `FeaturesTests/{OnboardingViewModelTests,
+  ScanViewModelTests}.swift`. Moved: `ScanStatsSection` to `Features/Settings/`.
+  Changed: `App/RootView.swift`, `Features/Scan/{ScanView,ScanViewModel,CardStackView,
+  CardStackViewModel,ScanConfig}.swift`, `Features/Debug/PreviewVLM.swift`,
+  `Pipeline/{ScanCoordinator,ScanStore,ScanPhase,PipelineConfig}.swift`,
+  `Inference/{VLMService,HubDownloader,ModelCatalog,InferenceConfig,InferenceError}.swift`,
+  `Models/VLMServing.swift`, `Shared/{Log,MemoryProbe}.swift`, `AccentColor.colorset`,
+  `project.yml`, test fakes, `ScanCoordinatorTests` (+3 tests).
+- Tests: 76 pass (simulator). Device build (clean): no warnings from app code.
+  Light and dark mode checked in the Simulator (onboarding, Scan, Photos-denied, Settings).
+- Known issues: the download wasn't run end to end on the phone today (Simulator only up
+  to the Download button). If the app's data is restored from a backup without the model,
+  onboarding is marked done and the first scan downloads the model with only "Loading the
+  model…" as progress. No free-space check before the 1.8 GB download. Cancelling the
+  download isn't possible (leaving the app pauses it; Retry resumes from the cache).
+  Haptics not felt on hardware yet.

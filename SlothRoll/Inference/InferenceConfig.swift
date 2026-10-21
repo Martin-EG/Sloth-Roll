@@ -8,6 +8,10 @@ enum InferenceConfig {
     /// Folder under Application Support where downloaded model snapshots are kept.
     static let modelCacheFolder = "Models/huggingface"
 
+    /// Files that must be on disk for the model to count as downloaded.
+    static let weightFilePatterns = ["*.safetensors"]
+    static let weightFileExtension = "safetensors"
+
     /// Hard cap on generated tokens so a runaway answer can't stall the UI.
     static let maxOutputTokens = 200
 
