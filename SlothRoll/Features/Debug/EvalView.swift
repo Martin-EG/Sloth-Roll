@@ -69,8 +69,8 @@ struct EvalView: View {
                 }
                 .disabled(viewModel.phase != .ready)
             }
-            if viewModel.skippedCount > 0 {
-                Text("\(viewModel.skippedCount) images skipped (not on device).")
+            if !viewModel.skippedAssetIDs.isEmpty {
+                Text("\(viewModel.skippedAssetIDs.count) images skipped (not on device).")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

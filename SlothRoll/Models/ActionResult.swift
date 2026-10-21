@@ -35,6 +35,11 @@ struct ActionResult: Codable, Sendable, Equatable {
 
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        // An object with no "type" (e.g. {"error": "..."}) isn't an answer; let the caller retry.
+        guard container.contains(.type) else {
+            throw DecodingError.keyNotFound(
+                CodingKeys.type, .init(codingPath: [], debugDescription: "No \"type\" key."))
+        }
         type = (try? container.decodeIfPresent(ActionType.self, forKey: .type)) ?? ActionType.none
         title = container.lenientString(forKey: .title) ?? ""
         date = container.lenientString(forKey: .date)

@@ -16,7 +16,7 @@ final class EvalViewModel {
     private(set) var rows: [EvalRow] = []
     /// Images processed and total in the current run.
     private(set) var progress: (done: Int, total: Int) = (0, 0)
-    private(set) var skippedCount = 0
+    private(set) var skippedAssetIDs: [String] = []
     private(set) var errorMessage: String?
 
     var modelID: String { vlm.modelID }
@@ -69,7 +69,7 @@ final class EvalViewModel {
         phase = .running
         isCancelling = false
         errorMessage = nil
-        skippedCount = 0
+        skippedAssetIDs = []
         rows = []
         defer { phase = .ready }
 
@@ -121,7 +121,7 @@ final class EvalViewModel {
 
     private func evaluate(assetID: String, mark: EvalMark?) async {
         guard let photo = await photoLibrary.loadImage(assetID: assetID) else {
-            skippedCount += 1
+            skippedAssetIDs.append(assetID)
             Log.eval.error("image_skipped asset=\(assetID, privacy: .public)")
             return
         }
@@ -144,7 +144,10 @@ final class EvalViewModel {
     }
 
     private func saveReport() {
-        store.save(EvalReport(modelID: modelID, createdAt: Date(), rows: rows))
+        store.save(
+            EvalReport(
+                modelID: modelID, createdAt: Date(), albumCount: progress.total,
+                skippedAssetIDs: skippedAssetIDs, rows: rows))
     }
 
     private func logSummary() {
@@ -154,7 +157,7 @@ final class EvalViewModel {
             .joined(separator: " ")
         Log.eval.info(
             """
-            run_done images=\(summary.total) skipped=\(self.skippedCount) \(counts, privacy: .public) \
+            run_done images=\(summary.total) skipped=\(self.skippedAssetIDs.count) \(counts, privacy: .public) \
             avg_extraction_s=\(summary.averageExtraction?.seconds ?? 0, format: .fixed(precision: 2)) \
             avg_ocr_s=\(summary.averageOCR?.seconds ?? 0, format: .fixed(precision: 3)) \
             retries=\(summary.retryCount) fallbacks=\(summary.fallbackCount) \

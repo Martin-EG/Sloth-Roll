@@ -21,11 +21,21 @@ struct EvalReport: Codable, Sendable {
 
     let modelID: String
     let createdAt: Date
+    /// Images in the album, including ones that couldn't be loaded. Optional so reports
+    /// saved before this field existed still load (and keep their marks).
+    let albumCount: Int?
+    /// Assets that couldn't be read from the device (usually iCloud-only originals).
+    let skippedAssetIDs: [String]?
     let rows: [Row]
 
-    init(modelID: String, createdAt: Date, rows: [EvalRow]) {
+    init(
+        modelID: String, createdAt: Date, albumCount: Int, skippedAssetIDs: [String],
+        rows: [EvalRow]
+    ) {
         self.modelID = modelID
         self.createdAt = createdAt
+        self.albumCount = albumCount
+        self.skippedAssetIDs = skippedAssetIDs
         self.rows = rows.map { row in
             Row(
                 assetID: row.assetID,

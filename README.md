@@ -149,5 +149,15 @@ run summary), `pipeline` (attempts, parse failures) or `inference`.
 - First device eval (iPhone 17 Pro): only 1 image reached the app. A party invite
   ("5 de julio 2026, hora 19") came back as `none` with no title: wrong. Extraction 14.4 s
   (first call after load, likely includes warm-up), OCR fast mode 0.24 s.
-- Known issues: eval sample is 1 image, so accuracy and triage are not measured yet; the
-  model may label past-dated events as none; `none` results may have an empty title.
+- Fix after first eval: an answer with no "type" key (the model once replied
+  `{"error": "..."}`) used to pass as a valid `none`; it now fails and triggers the retry.
+  Eval report now records album size and skipped (iCloud-only) images.
+- Eval run 2 (album "Sloth Test" = 2 images, 0 skipped): type correct 2/2 (the invite was
+  0/1 before the fix; the retry recovered it). Fields are weak: the cinema ticket says
+  "Hoy, 16 de julio, 08:25 PM" but came back dated today (2026-10-20), time 08:25 (an
+  earlier run gave 20:25), and the order number 5435 as an amount in MXN. Extraction 7.4 s
+  for one attempt, 14.9 s with a retry; OCR fast mode 0.09-0.12 s.
+- Known issues: relative dates ("Hoy") resolve against today, not the day the screenshot
+  was taken; order numbers get read as amounts; AM/PM conversion is unstable; the model
+  wraps JSON in code fences every time (parser handles it). 2 images is too few to judge
+  accuracy or triage; no junk screenshots in the album yet.

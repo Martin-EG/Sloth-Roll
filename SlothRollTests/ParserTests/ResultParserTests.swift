@@ -119,6 +119,12 @@ struct ResultParserTests {
         }
     }
 
+    @Test func rejectsObjectWithoutType() {
+        #expect(throws: PipelineError.self) {
+            try parser.parse(#"{"error": "The provided text does not contain a valid date."}"#)
+        }
+    }
+
     @Test func rejectsActionWithoutTitle() {
         #expect(throws: PipelineError.missingTitle) {
             try parser.parse(#"{"type":"event","date":"2026-10-24","confidence":"high"}"#)
