@@ -1,0 +1,18 @@
+docs/
+.DS_Store
+
+# Xcode
+DerivedData/
+build/
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# SwiftPM
+.build/
+.swiftpm/
+
+# Model weights
+*.safetensors
+*.gguf
+models/

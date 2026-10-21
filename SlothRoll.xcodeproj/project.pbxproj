@@ -1,0 +1,647 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0074A3CA19322FE07A677E41 /* HubDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E325E2D0C4C93E0FCC2217AB /* HubDownloader.swift */; };
+		10ED078F88B3C7142A1D784C /* AppDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BFFBE919B6C7B71FAAF92B4 /* AppDependencies.swift */; };
+		1B87E0AE4BB56C16E4CBBA0C /* SpikeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F868F0E62D323B6557F1497F /* SpikeViewModelTests.swift */; };
+		2A9660E6D3FC74C7408A950F /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = E1745A614A5CDCEAD827D595 /* MLXLMCommon */; };
+		33A32AF3212A38D620A332CF /* VLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3EDB4A8DF3C73A27FF6843A /* VLMService.swift */; };
+		36F92BFDCBD86BB704F5947B /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16965F45B51000CAA6FA7B9A /* Log.swift */; };
+		38D32458B84BAB6AE1FA745D /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = A18E7F97B3FA9F612DEF26CA /* HuggingFace */; };
+		3BDA56D5E042416E286364F6 /* SpikeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE4C35285487E528FA31964 /* SpikeView.swift */; };
+		4847B9A44F74B63296842940 /* SlothRollApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3D99B6C290F7FF1002EFFD /* SlothRollApp.swift */; };
+		4BBE357A96034FD88AAF4C3D /* TransformersTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77BBD09D1760A343BAA8A23C /* TransformersTokenizer.swift */; };
+		4C50C39EFC54C6F44A2B2B85 /* InferenceError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 967ECF73AF90E12BEDBC505E /* InferenceError.swift */; };
+		56D1949AE12E0B73B8218E79 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 864A710103A8C19A196DB478 /* RootView.swift */; };
+		5B67D494152248A23AD736FC /* InferenceConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93E2A46501731AC43793E57 /* InferenceConfig.swift */; };
+		6E7EFF1166E4601309BD2210 /* VLMServing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56823681925625AF4579B7ED /* VLMServing.swift */; };
+		8D8D30882D73795E9CA2F9BB /* TransformersTokenizerLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C817D2DA648FF19528AD8F45 /* TransformersTokenizerLoader.swift */; };
+		90A36DCA3F0FDD86C1AD61FE /* PreviewVLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD750A22E4ED7C29789496D /* PreviewVLM.swift */; };
+		AE96BB2DE8E2E2BA0B220D3E /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 856687E12CDA64FCAF3F335A /* Tokenizers */; };
+		BC0344794861AF9B0404346F /* Duration+Seconds.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D91FA2C33EE46AF3A07324 /* Duration+Seconds.swift */; };
+		E5851840AEF82C81F64AA6DD /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = 16B930C40D7BB4B925BEC845 /* MLX */; };
+		ED5FCA848273235098D24453 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5D0ECB89AAD9B5E018B9B4FE /* Assets.xcassets */; };
+		EF6C5571E43E552E2B118DFE /* MLXVLM in Frameworks */ = {isa = PBXBuildFile; productRef = 94FCC3BDC9B7A56363F3EBCD /* MLXVLM */; };
+		EF8B439EE9685D87F6C8941E /* SpikeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B7C63E60E5D25A468FFAC3 /* SpikeViewModel.swift */; };
+		F653B2E8386129759CB56855 /* ModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEB9917AE65604176A2F639 /* ModelCatalog.swift */; };
+		FC25BC76644B6C4DEDCA7A06 /* MemoryProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A3BF18C9663FF39E077E32 /* MemoryProbe.swift */; };
+		FE7118BCBC68992AD3653B40 /* SpikeConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD7C49C3274C7A455B08CDF /* SpikeConfig.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		064D04B4E3CA83D83F0FDD12 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ACC6D02951DFE3D500C73305 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AD37A5ADAB30889996AF45B9;
+			remoteInfo = SlothRoll;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0CD750A22E4ED7C29789496D /* PreviewVLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewVLM.swift; sourceTree = "<group>"; };
+		16965F45B51000CAA6FA7B9A /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		25B7C63E60E5D25A468FFAC3 /* SpikeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeViewModel.swift; sourceTree = "<group>"; };
+		4EE4C35285487E528FA31964 /* SpikeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeView.swift; sourceTree = "<group>"; };
+		51EB8952921F3BA8CD8FDDC3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		56823681925625AF4579B7ED /* VLMServing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VLMServing.swift; sourceTree = "<group>"; };
+		5AD7C49C3274C7A455B08CDF /* SpikeConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeConfig.swift; sourceTree = "<group>"; };
+		5AEB9917AE65604176A2F639 /* ModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCatalog.swift; sourceTree = "<group>"; };
+		5D0ECB89AAD9B5E018B9B4FE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		63F83A8C844DA00EE7B6774B /* SlothRoll.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SlothRoll.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		77BBD09D1760A343BAA8A23C /* TransformersTokenizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransformersTokenizer.swift; sourceTree = "<group>"; };
+		7BFFBE919B6C7B71FAAF92B4 /* AppDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependencies.swift; sourceTree = "<group>"; };
+		7ED07465A9D06C81135B69D1 /* SlothRollTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SlothRollTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		864A710103A8C19A196DB478 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		967ECF73AF90E12BEDBC505E /* InferenceError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InferenceError.swift; sourceTree = "<group>"; };
+		A93E2A46501731AC43793E57 /* InferenceConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InferenceConfig.swift; sourceTree = "<group>"; };
+		C817D2DA648FF19528AD8F45 /* TransformersTokenizerLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransformersTokenizerLoader.swift; sourceTree = "<group>"; };
+		CA414BF4FA08889019DFEE76 /* SlothRoll.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SlothRoll.entitlements; sourceTree = "<group>"; };
+		E325E2D0C4C93E0FCC2217AB /* HubDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubDownloader.swift; sourceTree = "<group>"; };
+		E3EDB4A8DF3C73A27FF6843A /* VLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VLMService.swift; sourceTree = "<group>"; };
+		E9D91FA2C33EE46AF3A07324 /* Duration+Seconds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Duration+Seconds.swift"; sourceTree = "<group>"; };
+		F7A3BF18C9663FF39E077E32 /* MemoryProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryProbe.swift; sourceTree = "<group>"; };
+		F868F0E62D323B6557F1497F /* SpikeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpikeViewModelTests.swift; sourceTree = "<group>"; };
+		FE3D99B6C290F7FF1002EFFD /* SlothRollApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlothRollApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FA90DB0404CC5DDB18902CC5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E5851840AEF82C81F64AA6DD /* MLX in Frameworks */,
+				EF6C5571E43E552E2B118DFE /* MLXVLM in Frameworks */,
+				2A9660E6D3FC74C7408A950F /* MLXLMCommon in Frameworks */,
+				38D32458B84BAB6AE1FA745D /* HuggingFace in Frameworks */,
+				AE96BB2DE8E2E2BA0B220D3E /* Tokenizers in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		20A1C138B9289C1C02EF72D4 /* FeaturesTests */ = {
+			isa = PBXGroup;
+			children = (
+				F868F0E62D323B6557F1497F /* SpikeViewModelTests.swift */,
+			);
+			path = FeaturesTests;
+			sourceTree = "<group>";
+		};
+		228648D9B7F5591A60980C51 = {
+			isa = PBXGroup;
+			children = (
+				ED13FDEE3656E0CF0C18591A /* SlothRoll */,
+				72C523291B08AC3EE7DE2E3A /* SlothRollTests */,
+				A7CADEE6BDE3A2B8C69DFA1D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		28EF679E6893B31C8BC0E413 /* Inference */ = {
+			isa = PBXGroup;
+			children = (
+				E325E2D0C4C93E0FCC2217AB /* HubDownloader.swift */,
+				A93E2A46501731AC43793E57 /* InferenceConfig.swift */,
+				967ECF73AF90E12BEDBC505E /* InferenceError.swift */,
+				5AEB9917AE65604176A2F639 /* ModelCatalog.swift */,
+				77BBD09D1760A343BAA8A23C /* TransformersTokenizer.swift */,
+				C817D2DA648FF19528AD8F45 /* TransformersTokenizerLoader.swift */,
+				E3EDB4A8DF3C73A27FF6843A /* VLMService.swift */,
+			);
+			path = Inference;
+			sourceTree = "<group>";
+		};
+		320240480F62FAA5F1425A7A /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				E9D91FA2C33EE46AF3A07324 /* Duration+Seconds.swift */,
+				16965F45B51000CAA6FA7B9A /* Log.swift */,
+				F7A3BF18C9663FF39E077E32 /* MemoryProbe.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		72C523291B08AC3EE7DE2E3A /* SlothRollTests */ = {
+			isa = PBXGroup;
+			children = (
+				20A1C138B9289C1C02EF72D4 /* FeaturesTests */,
+			);
+			path = SlothRollTests;
+			sourceTree = "<group>";
+		};
+		80FDD2AE2095B1808B5B6039 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				E240D55283C1909908146010 /* Debug */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		8C8B7D06B3EB6782D771457C /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				56823681925625AF4579B7ED /* VLMServing.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		966EEDCAD668EB855F80190F /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				5D0ECB89AAD9B5E018B9B4FE /* Assets.xcassets */,
+				51EB8952921F3BA8CD8FDDC3 /* Info.plist */,
+				CA414BF4FA08889019DFEE76 /* SlothRoll.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A7CADEE6BDE3A2B8C69DFA1D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				63F83A8C844DA00EE7B6774B /* SlothRoll.app */,
+				7ED07465A9D06C81135B69D1 /* SlothRollTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BDC26F69EE3E5D1EC85EFBFF /* App */ = {
+			isa = PBXGroup;
+			children = (
+				7BFFBE919B6C7B71FAAF92B4 /* AppDependencies.swift */,
+				864A710103A8C19A196DB478 /* RootView.swift */,
+				FE3D99B6C290F7FF1002EFFD /* SlothRollApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E240D55283C1909908146010 /* Debug */ = {
+			isa = PBXGroup;
+			children = (
+				0CD750A22E4ED7C29789496D /* PreviewVLM.swift */,
+				5AD7C49C3274C7A455B08CDF /* SpikeConfig.swift */,
+				4EE4C35285487E528FA31964 /* SpikeView.swift */,
+				25B7C63E60E5D25A468FFAC3 /* SpikeViewModel.swift */,
+			);
+			path = Debug;
+			sourceTree = "<group>";
+		};
+		ED13FDEE3656E0CF0C18591A /* SlothRoll */ = {
+			isa = PBXGroup;
+			children = (
+				BDC26F69EE3E5D1EC85EFBFF /* App */,
+				80FDD2AE2095B1808B5B6039 /* Features */,
+				28EF679E6893B31C8BC0E413 /* Inference */,
+				8C8B7D06B3EB6782D771457C /* Models */,
+				966EEDCAD668EB855F80190F /* Resources */,
+				320240480F62FAA5F1425A7A /* Shared */,
+			);
+			path = SlothRoll;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AD37A5ADAB30889996AF45B9 /* SlothRoll */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC330B98220CEB61A856045D /* Build configuration list for PBXNativeTarget "SlothRoll" */;
+			buildPhases = (
+				11C21748EE158EE9CEAE3611 /* Sources */,
+				C940074402AA7027FAA1DCC8 /* Resources */,
+				FA90DB0404CC5DDB18902CC5 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SlothRoll;
+			packageProductDependencies = (
+				16B930C40D7BB4B925BEC845 /* MLX */,
+				94FCC3BDC9B7A56363F3EBCD /* MLXVLM */,
+				E1745A614A5CDCEAD827D595 /* MLXLMCommon */,
+				A18E7F97B3FA9F612DEF26CA /* HuggingFace */,
+				856687E12CDA64FCAF3F335A /* Tokenizers */,
+			);
+			productName = SlothRoll;
+			productReference = 63F83A8C844DA00EE7B6774B /* SlothRoll.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E3B6464C80FFCB7218D18F0B /* SlothRollTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FD32D2835D52D4E353B59A60 /* Build configuration list for PBXNativeTarget "SlothRollTests" */;
+			buildPhases = (
+				52F79A2ACAA472BC65EE3260 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5D3975F11146A357D42092A0 /* PBXTargetDependency */,
+			);
+			name = SlothRollTests;
+			packageProductDependencies = (
+			);
+			productName = SlothRollTests;
+			productReference = 7ED07465A9D06C81135B69D1 /* SlothRollTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		ACC6D02951DFE3D500C73305 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					AD37A5ADAB30889996AF45B9 = {
+						DevelopmentTeam = HYZ2GHP9BH;
+						ProvisioningStyle = Automatic;
+					};
+					E3B6464C80FFCB7218D18F0B = {
+						DevelopmentTeam = HYZ2GHP9BH;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = B3D0BE4F05FC19B9F780DB88 /* Build configuration list for PBXProject "SlothRoll" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 228648D9B7F5591A60980C51;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9F42032B534583C2F0F11A7D /* XCRemoteSwiftPackageReference "mlx-swift" */,
+				E5FE01959FA2EF48124F37C5 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
+				5EF7F2D55597195A372900A6 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
+				35D8FCDA9107C47DFD2F6CE9 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A7CADEE6BDE3A2B8C69DFA1D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AD37A5ADAB30889996AF45B9 /* SlothRoll */,
+				E3B6464C80FFCB7218D18F0B /* SlothRollTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C940074402AA7027FAA1DCC8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ED5FCA848273235098D24453 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		11C21748EE158EE9CEAE3611 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10ED078F88B3C7142A1D784C /* AppDependencies.swift in Sources */,
+				BC0344794861AF9B0404346F /* Duration+Seconds.swift in Sources */,
+				0074A3CA19322FE07A677E41 /* HubDownloader.swift in Sources */,
+				5B67D494152248A23AD736FC /* InferenceConfig.swift in Sources */,
+				4C50C39EFC54C6F44A2B2B85 /* InferenceError.swift in Sources */,
+				36F92BFDCBD86BB704F5947B /* Log.swift in Sources */,
+				FC25BC76644B6C4DEDCA7A06 /* MemoryProbe.swift in Sources */,
+				F653B2E8386129759CB56855 /* ModelCatalog.swift in Sources */,
+				90A36DCA3F0FDD86C1AD61FE /* PreviewVLM.swift in Sources */,
+				56D1949AE12E0B73B8218E79 /* RootView.swift in Sources */,
+				4847B9A44F74B63296842940 /* SlothRollApp.swift in Sources */,
+				FE7118BCBC68992AD3653B40 /* SpikeConfig.swift in Sources */,
+				3BDA56D5E042416E286364F6 /* SpikeView.swift in Sources */,
+				EF8B439EE9685D87F6C8941E /* SpikeViewModel.swift in Sources */,
+				4BBE357A96034FD88AAF4C3D /* TransformersTokenizer.swift in Sources */,
+				8D8D30882D73795E9CA2F9BB /* TransformersTokenizerLoader.swift in Sources */,
+				33A32AF3212A38D620A332CF /* VLMService.swift in Sources */,
+				6E7EFF1166E4601309BD2210 /* VLMServing.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		52F79A2ACAA472BC65EE3260 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1B87E0AE4BB56C16E4CBBA0C /* SpikeViewModelTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5D3975F11146A357D42092A0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AD37A5ADAB30889996AF45B9 /* SlothRoll */;
+			targetProxy = 064D04B4E3CA83D83F0FDD12 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		501B157EED505E021552FBAD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.martinespericueta.slothroll.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SlothRoll.app/SlothRoll";
+			};
+			name = Release;
+		};
+		63718BC319CE48F791AD03DA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.martinespericueta.slothroll.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SlothRoll.app/SlothRoll";
+			};
+			name = Debug;
+		};
+		7984E025F914CDFC13B43376 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SlothRoll/Resources/SlothRoll.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SlothRoll/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.martinespericueta.slothroll;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		80050A0D1AFA93B30E355616 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = HYZ2GHP9BH;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		8F7BBB96F73987B1B57A2C84 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SlothRoll/Resources/SlothRoll.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = SlothRoll/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.martinespericueta.slothroll;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		FD4FF8A9C2F51181472E2EC3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = HYZ2GHP9BH;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AC330B98220CEB61A856045D /* Build configuration list for PBXNativeTarget "SlothRoll" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7984E025F914CDFC13B43376 /* Debug */,
+				8F7BBB96F73987B1B57A2C84 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B3D0BE4F05FC19B9F780DB88 /* Build configuration list for PBXProject "SlothRoll" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				80050A0D1AFA93B30E355616 /* Debug */,
+				FD4FF8A9C2F51181472E2EC3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FD32D2835D52D4E353B59A60 /* Build configuration list for PBXNativeTarget "SlothRollTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				63718BC319CE48F791AD03DA /* Debug */,
+				501B157EED505E021552FBAD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		35D8FCDA9107C47DFD2F6CE9 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-transformers";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
+		5EF7F2D55597195A372900A6 /* XCRemoteSwiftPackageReference "swift-huggingface" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-huggingface";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
+			};
+		};
+		9F42032B534583C2F0F11A7D /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.32.3;
+			};
+		};
+		E5FE01959FA2EF48124F37C5 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 3.32.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		16B930C40D7BB4B925BEC845 /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9F42032B534583C2F0F11A7D /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		856687E12CDA64FCAF3F335A /* Tokenizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 35D8FCDA9107C47DFD2F6CE9 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Tokenizers;
+		};
+		94FCC3BDC9B7A56363F3EBCD /* MLXVLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E5FE01959FA2EF48124F37C5 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXVLM;
+		};
+		A18E7F97B3FA9F612DEF26CA /* HuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5EF7F2D55597195A372900A6 /* XCRemoteSwiftPackageReference "swift-huggingface" */;
+			productName = HuggingFace;
+		};
+		E1745A614A5CDCEAD827D595 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E5FE01959FA2EF48124F37C5 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLMCommon;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = ACC6D02951DFE3D500C73305 /* Project object */;
+}
