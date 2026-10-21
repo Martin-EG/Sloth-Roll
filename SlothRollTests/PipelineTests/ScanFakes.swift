@@ -51,6 +51,10 @@ struct FakeScanLibrary: PhotoLibraryProviding {
             capturedAt: Date(timeIntervalSince1970: Double(1_000_000 - asset.width)),
             source: asset.source)
     }
+
+    func loadPreview(assetID: String, maxPixels: Int) async -> CGImage? {
+        assets.first(where: { $0.id == assetID }).map { fakeImage(width: $0.width) }
+    }
 }
 
 /// Candidate when the image width is in `candidateWidths`.

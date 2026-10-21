@@ -1,4 +1,6 @@
 #if DEBUG
+import CoreGraphics
+
 /// Fake album of placeholder screenshots so screens preview without Photos access.
 struct PreviewPhotoLibrary: PhotoLibraryProviding {
     var imageCount = 3
@@ -17,6 +19,10 @@ struct PreviewPhotoLibrary: PhotoLibraryProviding {
         guard let image = PreviewVLM.sampleImage() else { return nil }
         return LibraryImage(assetID: assetID, image: image, thumbnail: image, capturedAt: nil,
             source: .screenshot)
+    }
+
+    func loadPreview(assetID: String, maxPixels: Int) async -> CGImage? {
+        PreviewVLM.sampleImage()
     }
 }
 #endif

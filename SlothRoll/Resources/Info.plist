@@ -22,6 +22,8 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Sloth Roll adds events from your screenshots to your calendar. It can't read your existing events.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Sloth Roll reads your screenshots on this iPhone to turn them into events, places, and expenses. Nothing leaves the device.</string>
 	<key>UIApplicationSceneManifest</key>

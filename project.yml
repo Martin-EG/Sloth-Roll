@@ -37,6 +37,7 @@ targets:
       properties:
         CFBundleDisplayName: Sloth Roll
         NSPhotoLibraryUsageDescription: Sloth Roll reads your screenshots on this iPhone to turn them into events, places, and expenses. Nothing leaves the device.
+        NSCalendarsWriteOnlyAccessUsageDescription: Sloth Roll adds events from your screenshots to your calendar. It can't read your existing events.
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false

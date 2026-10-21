@@ -10,9 +10,10 @@ download.
 
 ## How it works
 
-Today (day 3) you tap **Scan** and the app works through your newest images on its own,
-saving every answer on the phone. The swipe cards come next; for now the results show as a
-plain list grouped by type.
+Today (day 4) the app has two tabs. On **Scan** you tap **Scan** and the app works through
+your newest images on its own, saving every answer on the phone. Each screenshot with an
+action becomes a card; you swipe right to do it, left to skip. **Expenses** lists the
+receipts you kept, with a total per currency.
 
 1. **Find new images.** The app asks for Photos access (if you only allow some photos, it
    scans those and says so). It looks at the newest 500 images and skips anything it has
@@ -28,6 +29,28 @@ plain list grouped by type.
    everything so far. If iOS warns that memory is low, the app finishes the current image,
    unloads the model, and pauses with a message. Tapping **Resume scan** picks up the images
    that passed triage but weren't read yet.
+5. **Review cards.** Every result with an action shows up as a card, newest screenshot
+   first: the screenshot, an Event / Place / Receipt badge, the title, and what will happen
+   in plain words ("Add event · Sat 25 Oct, 18:00 · Teatro del Estado"). Cards the model
+   marked low confidence carry a small "not sure" tag.
+   - **Swipe right** (or tap the green button): the card tilts and turns green, then the
+     action runs. A short message says what happened ("Added to Calendar: Feria del Libro,
+     Sat 25 Oct") and the card is marked done.
+   - **Swipe left** (or **Skip**): the card turns red and is marked skipped. It never comes
+     back.
+   - **Tap the card** to fix the title, date, time, place, or amount before swiping.
+   - If the action can't run (calendar access denied, no date, no amount), the card springs
+     back and a message says why. Nothing is lost.
+   - With no cards left: "Nothing to do. Very sloth."
+6. **What each swipe does.**
+   - **Event:** the first time, iOS asks for calendar access (add-only: the app can never
+     read your calendar). The event goes into your default calendar: one hour long if it
+     has a time, all-day if not.
+   - **Place:** Apple Maps opens on the place. The app looks the text up with Apple's place
+     search first; if that finds nothing, Maps opens with a plain search for the text.
+   - **Receipt:** an expense is saved inside the app (title, amount, currency, date). If the
+     receipt has no date, the day of the screenshot is used. Nothing is exported.
+
 **Reading one image** (the extraction step):
 
 1. The app builds a prompt (Spanish + English) that includes the day the screenshot was
@@ -46,8 +69,9 @@ plain list grouped by type.
    fails too, the screenshot is marked "Couldn't read this one". It never crashes on bad
    output.
 
-**Debug menu (debug builds).** The ladybug button opens the eval screen and can clear the
-scan cache (so the next scan redoes everything).
+**Debug menu (debug builds).** The ladybug button on the Scan tab opens the eval screen,
+shows the last scan's stats (counts, timings, peak memory), and can clear the scan cache
+(so the next scan redoes everything; saved expenses stay).
 
 **Eval screen (debug builds).** Tap **Load model**, then **Run eval**. The app reads every
 image in the Photos album "Sloth Test" (screenshots, saved images, and camera photos; each
@@ -61,10 +85,16 @@ correct, or wrong and what it should have been. Marks are saved to
 
 ```
 SlothRoll/
-  App/         SlothRollApp (entry), AppDependencies (composition root), RootView
+  App/         SlothRollApp (entry), AppDependencies (composition root, builds the action
+               performers), RootView (TabView: Scan, Expenses; debug menu)
   Features/    one folder per screen (View + @Observable @MainActor ViewModel)
-    Scan/      ScanView, ScanViewModel, ScanStatsSection, ScanResultsSections (temporary
-               list by type, via @Query), ScanResultRow, ScanConfig
+    Scan/      ScanView (scan button + progress + card stack), ScanViewModel,
+               CardStackView (@Query of `extracted` items, drag/buttons, tint, rotation),
+               CardView, CardStackViewModel (perform / skip / edit / card images, toast),
+               EditSheet, CardText (plain-words proposal), TypeBadge, ScanStatsSection
+               (debug sheet), ScanConfig
+    Expenses/  ExpenseListView (@Query of expenses, totals on top), ExpensesViewModel,
+               CurrencyTotal
     Debug/     (DEBUG only) EvalView, EvalRowView, EvalViewModel, EvalRow, EvalMark,
                EvalSummary, EvalReport, EvalReportStore, EvalConfig,
                PreviewVLM + PreviewPhotoLibrary (fakes for SwiftUI previews)
@@ -76,19 +106,25 @@ SlothRoll/
                + ImageSource, PipelineError, PipelineConfig
   Inference/   VLMService (actor), ModelCatalog, InferenceConfig, InferenceError,
                HubDownloader + TransformersTokenizer(Loader) (mlx-swift-lm adapters)
-  Actions/     (empty) EventKit / Maps / expense performers
-  Models/      ActionResult, ActionType, Currency, Confidence, VLMServing (protocol)
+  Actions/     ActionPerformer (protocol), EventAction (actor, EventKit write-only) +
+               EventDraft, PlaceAction (MKLocalSearch, maps:// fallback), ReceiptAction
+               (SwiftData Expense), ActionError, ActionsConfig
+  Models/      ActionResult (+Dates: "YYYY-MM-DD"/"HH:mm" <-> Date), ActionType, Currency
+               (+Format), Confidence, ActionOutcome, VLMServing (protocol)
   Storage/     ScreenshotItem (@Model: assetID unique, status, skip reason, result JSON,
                capturedAt, processedAt), Expense (@Model), ScanStatus, SkipReason,
                Persistence (container; falls back to in-memory if the store won't open)
-  Shared/      Log (os.Logger categories), MemoryProbe, Duration+Seconds
+  Shared/      Log (os.Logger categories), MemoryProbe, Duration+Seconds, Toast +
+               ToastOverlay (`.toast(_:duration:)`)
   Resources/   Assets, Info.plist, SlothRoll.entitlements
 SlothRollTests/
   ParserTests/     ResultParserTests
   PipelineTests/   ExtractorTests (scripted fake VLM), ExtractionPromptTests,
                    ImageSourceTests, ScanCoordinatorTests + ScanFakes
   StorageTests/    ScreenshotItemTests
-  FeaturesTests/   EvalSummaryTests
+  ActionsTests/    EventDraftTests, ReceiptActionTests, PlaceActionTests
+  FeaturesTests/   EvalSummaryTests, CardStackViewModelTests (fake performer),
+                   CardTextTests, ExpensesViewModelTests
 ```
 
 Data flow for a scan:
@@ -98,8 +134,17 @@ Data flow for a scan:
 for each, `PhotoLibrary.loadImage` (1024 px + thumbnail + `ImageSource`) → camera? record
 skipped : `Triage.isCandidate` → `ScanStore.record` (triaged / skipped) → … up to 50 →
 `VLMServing.load()` → for each `triaged` item: `Extractor` → `ScanStore.complete`
-(extracted / skipped "none" / failed) → `VLMServing.unload()`. The list on screen reads
-SwiftData through `@Query`, so it updates as each item is saved.
+(extracted / skipped "none" / failed) → `VLMServing.unload()`. The card stack reads
+`extracted` items through `@Query`, so new cards appear as each item is saved.
+
+Data flow for a swipe:
+
+`CardStackView` (drag past 110 pt, or a button) → `CardStackViewModel.perform(item)` →
+`AppDependencies.actionPerformers[type]` (`EventAction` / `PlaceAction` / `ReceiptAction`,
+all behind `ActionPerformer`) → `ActionOutcome` → item `done` + toast. A thrown
+`ActionError` keeps the item `extracted` and shows its message. Skip → item `skipped`.
+`EditSheet` → `CardStackViewModel.save(_:for:)` rewrites the item's result.
+`ExpenseListView` reads `Expense` through `@Query`; `ExpensesViewModel` sums per currency.
 
 Eval flow (debug): `EvalView` → `EvalViewModel` → `PhotoLibrary` → `Triage` (OCR, timing)
 → `Extractor` → row on screen + `eval-report.json`.
@@ -146,7 +191,12 @@ The Xcode project is generated from `project.yml` with XcodeGen. The generated
    Copy the report off the phone with
    `xcrun devicectl device copy from --device <UDID> --domain-type appDataContainer --domain-identifier com.martinespericueta.slothroll --source Documents/eval-report.json --destination eval-report.json`.
 
-9. Scan timing run (debug): launch with `-scanAutorun -scanReset` (clears the cache, then
+9. Calendar: the first right swipe on an event asks for calendar access
+   (`NSCalendarsWriteOnlyAccessUsageDescription` is set in `project.yml` / `Info.plist`;
+   the app asks for add-only access). If you deny it, turn it on in Settings › Apps ›
+   Sloth Roll › Calendars.
+
+10. Scan timing run (debug): launch with `-scanAutorun -scanReset` (clears the cache, then
    scans). Stats land in `Documents/scan-stats.json`; copy them off with the same
    `devicectl ... copy from` command as step 8, with `--source Documents/scan-stats.json`. Keep the phone
    unlocked; the scan screen also keeps it awake while running.
@@ -316,3 +366,33 @@ run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory 
   OCR now runs on the 1024 px image (day-2 numbers were at full size), and the eval screen
   now also gets 1024 px images. A scan unloads the shared model, so an open eval screen thinks
   the model is still loaded (debug only).
+
+### 2026-10-21 (day 4): swipe review cards, actions, expenses tab
+
+- Built: `ActionPerformer` protocol with three performers: `EventAction` (EventKit,
+  write-only access via `requestWriteOnlyAccessToEvents`, default calendar, 1 hour or
+  all-day), `PlaceAction` (MKLocalSearch best match opened in Maps, `maps://?q=` fallback),
+  `ReceiptAction` (inserts an `Expense`; undated receipts take the screenshot's date). Each
+  returns a one-line `ActionOutcome`; failures are typed `ActionError` with user-facing
+  messages. Swipe card stack (top 3 drawn, rotation + green/red tint while dragging, fly-out,
+  spring back on failure, buttons and VoiceOver actions for the same), "not sure" tag on
+  low confidence, toast, edit sheet, empty state. Expenses tab with per-currency totals and
+  swipe-to-delete. TabView navigation; the temporary results list is gone and the last-scan
+  stats moved to the debug menu.
+- Files added: `Actions/{ActionPerformer,ActionError,ActionsConfig,EventDraft,EventAction,
+  PlaceAction,ReceiptAction}.swift`, `Models/{ActionOutcome,ActionResult+Dates,
+  Currency+Format}.swift`, `Features/Scan/{CardStackView,CardStackViewModel,CardView,
+  CardText,TypeBadge,EditSheet}.swift`, `Features/Expenses/{ExpenseListView,
+  ExpensesViewModel,CurrencyTotal}.swift`, `Shared/{Toast,ToastOverlay}.swift`, tests in
+  `ActionsTests/` and `FeaturesTests/`. Removed: `Features/Scan/{ScanResultsSections,
+  ScanResultRow}.swift`. Changed: `App/{AppDependencies,RootView}.swift`,
+  `Features/Scan/{ScanView,ScanConfig}.swift`, `Pipeline/{PhotoLibrary,
+  PhotoLibraryProviding}.swift` (new `loadPreview` for card images via PHImageManager),
+  `Features/Debug/PreviewPhotoLibrary.swift`, `Shared/Log.swift` (`actions`, `expenses`
+  categories), `project.yml` + `Info.plist` (calendar usage string), test fakes.
+- Tests: 65 pass (simulator). Device build: no new warnings.
+- Known issues: not tried on the phone yet (swipe feel, permission prompt, Maps hand-off).
+  `MKLocalSearch` is a network call to Apple's place search, which bends the "no network"
+  rule (the user asked for it; Maps itself needs the network anyway). Event dates use the
+  phone's current time zone. The edit sheet can't change the type (a receipt read as an
+  event stays an event). Cards for screenshots deleted from Photos show a blank image.

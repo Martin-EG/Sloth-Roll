@@ -11,6 +11,10 @@ enum Log {
     static let storage = Logger(subsystem: subsystem, category: "storage")
     /// Scan screen: user actions and the debug stats file.
     static let scan = Logger(subsystem: subsystem, category: "scan")
+    /// Calendar, Maps, and expense actions: results and failures (no event contents).
+    static let actions = Logger(subsystem: subsystem, category: "actions")
+    /// Expenses screen.
+    static let expenses = Logger(subsystem: subsystem, category: "expenses")
     /// Debug eval screen: per-image timings and the run summary.
     static let eval = Logger(subsystem: subsystem, category: "eval")
 }

@@ -11,10 +11,14 @@ final class AppDependencies {
     let photoLibrary: any PhotoLibraryProviding
     let modelContainer: ModelContainer
     let scanCoordinator: ScanCoordinator
+    /// One performer per action type; "none" has none.
+    let actionPerformers: [ActionType: any ActionPerformer]
 
+    /// `actionPerformers` defaults to the live EventKit / Maps / SwiftData ones.
     init(
         vlm: any VLMServing, photoLibrary: any PhotoLibraryProviding,
-        triage: any ImageTriaging, modelContainer: ModelContainer
+        triage: any ImageTriaging, modelContainer: ModelContainer,
+        actionPerformers: [ActionType: any ActionPerformer]? = nil
     ) {
         self.vlm = vlm
         self.photoLibrary = photoLibrary
@@ -22,5 +26,11 @@ final class AppDependencies {
         self.scanCoordinator = ScanCoordinator(
             vlm: vlm, photoLibrary: photoLibrary, triage: triage,
             modelContext: modelContainer.mainContext)
+        self.actionPerformers =
+            actionPerformers ?? [
+                .event: EventAction(),
+                .place: PlaceAction(),
+                .receipt: ReceiptAction(context: modelContainer.mainContext),
+            ]
     }
 }

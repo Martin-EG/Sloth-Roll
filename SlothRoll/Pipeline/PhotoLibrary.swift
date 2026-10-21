@@ -2,6 +2,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import Photos
+import UIKit
 
 /// Live PhotoKit implementation of `PhotoLibraryProviding`. Never downloads from iCloud.
 struct PhotoLibrary: PhotoLibraryProviding {
@@ -54,6 +55,27 @@ struct PhotoLibrary: PhotoLibraryProviding {
             assetID: assetID, image: image,
             thumbnail: Self.downscaled(source, maxPixels: PipelineConfig.thumbnailMaxPixels),
             capturedAt: asset.creationDate, source: origin)
+    }
+
+    /// Asks Photos for a resized image instead of decoding the original, which is cheaper
+    /// for a card than `loadImage`.
+    func loadPreview(assetID: String, maxPixels: Int) async -> CGImage? {
+        guard
+            let asset = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil)
+                .firstObject
+        else { return nil }
+        let options = PHImageRequestOptions()
+        options.isNetworkAccessAllowed = false
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .fast
+        let size = CGSize(width: maxPixels, height: maxPixels)
+        return await withCheckedContinuation { continuation in
+            PHImageManager.default().requestImage(
+                for: asset, targetSize: size, contentMode: .aspectFit, options: options
+            ) { image, _ in
+                continuation.resume(returning: image?.cgImage)
+            }
+        }
     }
 
     // MARK: - Private

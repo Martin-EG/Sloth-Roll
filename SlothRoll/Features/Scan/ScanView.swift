@@ -1,27 +1,28 @@
 import SwiftData
 import SwiftUI
 
-/// Scan screen: a Scan button, live progress from the coordinator, and (temporarily) the
-/// stored results grouped by type, to check the pipeline before the swipe UI exists.
+/// Scan tab: a Scan button with live progress on top, the review card stack below.
 struct ScanView: View {
     @Bindable var viewModel: ScanViewModel
+    let cardStackViewModel: CardStackViewModel
 
     var body: some View {
-        List {
-            scanSection
-            if let stats = viewModel.stats, !viewModel.isRunning {
-                ScanStatsSection(stats: stats)
-            }
-            ScanResultsSections()
+        VStack(spacing: 0) {
+            scanHeader
+                .padding(.horizontal)
+                .padding(.top, 8)
+            CardStackView(viewModel: cardStackViewModel)
+                .frame(maxHeight: .infinity)
         }
         .navigationTitle("Sloth Roll")
+        .navigationBarTitleDisplayMode(.inline)
         #if DEBUG
         .task { await viewModel.autorunIfRequested() }
         #endif
     }
 
-    private var scanSection: some View {
-        Section {
+    private var scanHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
             if viewModel.isRunning {
                 HStack(alignment: .center, spacing: 12) {
                     thumbnail
@@ -36,10 +37,16 @@ struct ScanView: View {
                     }
                 }
                 Button("Stop after this one", role: .cancel) { viewModel.cancel() }
+                    .font(.footnote)
             } else {
-                Button(viewModel.scanButtonTitle) {
+                Button {
                     Task { await viewModel.scan() }
+                } label: {
+                    Label(viewModel.scanButtonTitle, systemImage: "sparkle.magnifyingglass")
+                        .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
             }
             if let message = viewModel.statusMessage {
                 Text(message)
@@ -72,11 +79,14 @@ struct ScanView: View {
 #if DEBUG
 #Preview {
     let container = Persistence.makeContainer(inMemory: true)
+    let library = PreviewPhotoLibrary()
     let coordinator = ScanCoordinator(
-        vlm: PreviewVLM(delay: .milliseconds(300)), photoLibrary: PreviewPhotoLibrary(),
+        vlm: PreviewVLM(delay: .milliseconds(300)), photoLibrary: library,
         triage: Triage(), modelContext: container.mainContext)
+    let cards = CardStackViewModel(
+        performers: [:], photoLibrary: library, context: container.mainContext)
     NavigationStack {
-        ScanView(viewModel: ScanViewModel(coordinator: coordinator))
+        ScanView(viewModel: ScanViewModel(coordinator: coordinator), cardStackViewModel: cards)
     }
     .modelContainer(container)
 }
