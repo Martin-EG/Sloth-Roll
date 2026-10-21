@@ -88,7 +88,7 @@ struct Extractor: Sendable {
         case .invalidTime(let time): "\"\(time)\" is not a 24-hour HH:mm time"
         case .negativeAmount: "amount must not be negative"
         case .missingTitle: "title was empty"
-        case .photoAccessDenied, .albumNotFound: "unexpected error"
+        case .photoAccessDenied, .albumNotFound, .deleteFailed: "unexpected error"
         }
     }
 }

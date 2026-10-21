@@ -33,6 +33,9 @@ struct FakeScanLibrary: PhotoLibraryProviding {
 
     var assets: [Asset]
     var access: PhotoAccess = .full
+    /// What `deleteAssets` does: true deletes, false is the user declining, nil throws.
+    var deletes: Bool? = true
+    var log: ScanEventLog?
 
     func requestAccess() async -> PhotoAccess { access }
 
@@ -55,6 +58,30 @@ struct FakeScanLibrary: PhotoLibraryProviding {
     func loadPreview(assetID: String, maxPixels: Int) async -> CGImage? {
         assets.first(where: { $0.id == assetID }).map { fakeImage(width: $0.width) }
     }
+
+    func deleteAssets(ids: [String]) async throws(PipelineError) -> Bool {
+        await log?.append("delete \(ids.joined(separator: ","))")
+        guard let deletes else { throw .deleteFailed }
+        return deletes
+    }
+}
+
+/// Returns the signals set for the image's width; nil (not measurable) for any other width.
+struct FakeAnalyzer: ImageAnalyzing {
+    var signals: [Int: ImageSignals] = [:]
+
+    func signals(for image: CGImage) async -> ImageSignals? {
+        signals[image.width]
+    }
+}
+
+extension ImageSignals {
+    /// Sharp, contrasty image with the given feature print.
+    static func sharp(print: [Float]) -> ImageSignals {
+        ImageSignals(sharpness: 5_000, contrast: 60, featurePrint: print)
+    }
+
+    static let blurry = ImageSignals(sharpness: 1, contrast: 60, featurePrint: [9, 9])
 }
 
 /// Candidate when the image width is in `candidateWidths`.
@@ -81,12 +108,18 @@ actor FakeScanVLM: VLMServing {
 
     private let log: ScanEventLog
     private let answers: [Int: String]
+    /// Answers to the cleanup "still useful?" question, by image width; "yes" otherwise.
+    private let cleanupAnswers: [Int: String]
     private let failsToLoad: Bool
     private var firstReadHook: (@Sendable () async -> Void)?
 
-    init(log: ScanEventLog, answers: [Int: String] = [:], failsToLoad: Bool = false) {
+    init(
+        log: ScanEventLog, answers: [Int: String] = [:], cleanupAnswers: [Int: String] = [:],
+        failsToLoad: Bool = false
+    ) {
         self.log = log
         self.answers = answers
+        self.cleanupAnswers = cleanupAnswers
         self.failsToLoad = failsToLoad
     }
 
@@ -100,6 +133,10 @@ actor FakeScanVLM: VLMServing {
     }
 
     func describe(image: CGImage, prompt: String) async throws -> String {
+        if prompt == UsefulnessQuestion.prompt {
+            await log.append("ask \(image.width)")
+            return cleanupAnswers[image.width] ?? "Yes."
+        }
         await log.append("read \(image.width)")
         if let hook = firstReadHook {
             firstReadHook = nil

@@ -38,7 +38,8 @@ final class ScanViewModel {
     /// One line under the Scan button after a scan ends.
     var statusMessage: String? {
         switch phase {
-        case .idle, .preparing, .triage, .loadingModel, .extract, .noPhotoAccess, .modelLoadFailed:
+        case .idle, .preparing, .triage, .loadingModel, .extract, .cleanup, .noPhotoAccess,
+            .modelLoadFailed:
             nil
         case .finished: finishedMessage
         case .cancelled: "Stopped. Everything read so far is saved."
@@ -52,7 +53,7 @@ final class ScanViewModel {
 
     private var finishedMessage: String {
         // Camera photos don't count; a resumed scan reads leftovers without triaging.
-        guard let stats, stats.triaged + stats.modelReads > 0 else {
+        guard let stats, stats.triaged + stats.modelReads + stats.cleanupAsked > 0 else {
             return "No new screenshots since the last scan. Take some, then scan again."
         }
         return switch stats.extracted {
@@ -69,6 +70,7 @@ final class ScanViewModel {
         case .triage: "Checking \(next) of \(progress.total) for text…"
         case .loadingModel: "Loading the model…"
         case .extract: "Reading \(next) of \(progress.total)…"
+        case .cleanup: "Looking for screenshots to clean up (\(next) of \(progress.total))…"
         default: ""
         }
     }

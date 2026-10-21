@@ -16,7 +16,7 @@ struct ScanViewModelTests {
             coordinator: ScanCoordinator(
                 vlm: vlm ?? FakeScanVLM(log: log),
                 photoLibrary: FakeScanLibrary(assets: assets, access: access),
-                triage: FakeTriage(candidateWidths: [1], log: log),
+                triage: FakeTriage(candidateWidths: [1], log: log), analyzer: FakeAnalyzer(),
                 modelContext: container.mainContext))
     }
 

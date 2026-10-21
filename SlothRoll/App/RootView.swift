@@ -1,7 +1,9 @@
+import SwiftData
 import SwiftUI
 
 /// First launch shows onboarding until the model is downloaded; after that, the tabs:
-/// Scan (scan button + review cards), Expenses, and Settings.
+/// Scan (scan button + review cards), Expenses, Clean up (only while it has screenshots to
+/// offer), and Settings.
 struct RootView: View {
     let dependencies: AppDependencies
 
@@ -10,6 +12,10 @@ struct RootView: View {
     @State private var scanViewModel: ScanViewModel
     @State private var cardStackViewModel: CardStackViewModel
     @State private var expensesViewModel: ExpensesViewModel
+    @State private var cleanupViewModel: CleanupViewModel
+    @State private var selectedTab = RootTab.scan
+    @Query(filter: #Predicate<ScreenshotItem> { $0.cleanupReasonRaw != nil })
+    private var cleanupCandidates: [ScreenshotItem]
     @State private var settingsViewModel: SettingsViewModel
     #if DEBUG
     @State private var evalViewModel: EvalViewModel
@@ -26,6 +32,8 @@ struct RootView: View {
                 performers: dependencies.actionPerformers,
                 photoLibrary: dependencies.photoLibrary, context: context))
         _expensesViewModel = State(initialValue: ExpensesViewModel(context: context))
+        _cleanupViewModel = State(
+            initialValue: CleanupViewModel(photoLibrary: dependencies.photoLibrary, context: context))
         _settingsViewModel = State(
             initialValue: SettingsViewModel(
                 coordinator: dependencies.scanCoordinator, vlm: dependencies.vlm))
@@ -47,18 +55,28 @@ struct RootView: View {
     }
 
     private var tabs: some View {
-        TabView {
-            Tab("Scan", systemImage: "rectangle.stack") {
+        TabView(selection: $selectedTab) {
+            Tab("Scan", systemImage: "rectangle.stack", value: RootTab.scan) {
                 NavigationStack {
                     ScanView(viewModel: scanViewModel, cardStackViewModel: cardStackViewModel)
                 }
             }
-            Tab("Expenses", systemImage: "creditcard") {
+            Tab("Expenses", systemImage: "creditcard", value: RootTab.expenses) {
                 NavigationStack {
                     ExpenseListView(viewModel: expensesViewModel)
                 }
             }
-            Tab("Settings", systemImage: "gearshape") {
+            // Stays while selected, so the "Moved to Recently Deleted" toast is seen even when
+            // the last candidates were just deleted.
+            if !cleanupCandidates.isEmpty || selectedTab == .cleanup {
+                Tab("Clean up", systemImage: "sparkles", value: RootTab.cleanup) {
+                    NavigationStack {
+                        CleanupView(viewModel: cleanupViewModel)
+                    }
+                }
+                .badge(cleanupCandidates.count)
+            }
+            Tab("Settings", systemImage: "gearshape", value: RootTab.settings) {
                 NavigationStack {
                     #if DEBUG
                     SettingsView(viewModel: settingsViewModel) { isShowingEval = true }
@@ -96,7 +114,7 @@ struct RootView: View {
 #Preview {
     let dependencies = AppDependencies(
         vlm: PreviewVLM(), photoLibrary: PreviewPhotoLibrary(), triage: Triage(),
-        modelContainer: Persistence.makeContainer(inMemory: true), actionPerformers: [:])
+        analyzer: ImageAnalyzer(), modelContainer: Persistence.makeContainer(inMemory: true), actionPerformers: [:])
     RootView(dependencies: dependencies)
         .modelContainer(dependencies.modelContainer)
 }

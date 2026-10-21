@@ -1,6 +1,7 @@
 import CoreGraphics
 
-/// Read-only access to the user's photo library, so features and tests don't touch PhotoKit.
+/// Access to the user's photo library (reading, plus moving screenshots to Recently Deleted),
+/// so features and tests don't touch PhotoKit.
 protocol PhotoLibraryProviding: Sendable {
     /// Asks for library access if needed and says how much was granted.
     func requestAccess() async -> PhotoAccess
@@ -18,4 +19,8 @@ protocol PhotoLibraryProviding: Sendable {
     /// A display-size image for a review card (long side about `maxPixels`). Nil if it's
     /// missing or only in iCloud.
     func loadPreview(assetID: String, maxPixels: Int) async -> CGImage?
+
+    /// Moves these assets to Recently Deleted after iOS's own confirmation. False when the
+    /// user declines; ids no longer in the library are ignored.
+    func deleteAssets(ids: [String]) async throws(PipelineError) -> Bool
 }

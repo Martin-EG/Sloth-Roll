@@ -10,11 +10,13 @@ download.
 
 ## How it works
 
-Today (day 5) a fresh install walks you through three short screens, downloads the model
-once, and then opens on three tabs. On **Scan** you tap **Scan** and the app works through
+Today (day 6) a fresh install walks you through three short screens, downloads the model
+once, and then opens on three tabs (four when there is something to clean up). On **Scan** you tap **Scan** and the app works through
 your newest images on its own, saving every answer on the phone. Each screenshot with an
 action becomes a card; you swipe right to do it, left to skip. **Expenses** lists the
-receipts you kept, with a total per currency. **Settings** sets how many screenshots a scan
+receipts you kept, with a total per currency. **Clean up** appears only when the scan found
+screenshots worth deleting (blurry, duplicate, or not useful) and deletes them in one tap,
+through iOS's own confirmation. **Settings** sets how many screenshots a scan
 reads, can start over from scratch, and says which model runs on the phone.
 
 0. **First launch.** Two intro screens ("You take screenshots. Sloth Roll does the rest.",
@@ -68,6 +70,26 @@ reads, can start over from scratch, and says which model runs on the phone.
    - **Receipt:** an expense is saved inside the app (title, amount, currency, date). If the
      receipt has no date, the day of the screenshot is used. Nothing is exported.
 
+7. **Clean up pile.** While triage has each image open it also measures how blurry it is
+   and takes Apple's image "fingerprint" (a Vision feature print), so nothing is loaded
+   twice. After the model has read the cards, the app looks at the screenshots that ended
+   up skipped: too little text, the model found no action, or you swiped them left (those
+   are judged on the next scan). Camera photos are never touched.
+   - **Blurry:** few sharp edges (but a plain blank screen doesn't count as blurry).
+   - **Duplicate:** screenshots whose fingerprints are very close form a group; the newest
+     one is kept and the older ones are offered.
+   - **Not useful:** for everything else, the same model (still loaded, so no second model)
+     is asked one question: "Is this screenshot still useful to keep? Answer only yes or no."
+     Only a clear "no" puts it in the pile; anything unclear keeps it. Each screenshot is
+     asked once.
+   The **Clean up** tab (with a count badge) shows them in a grid, each with a Blurry /
+   Duplicate / Not useful badge, all selected. Tap to unselect; **Select all / Deselect
+   all** in the corner. **Delete N screenshots** hands them to Photos, which shows its own
+   "Allow Sloth Roll to delete…" prompt; they go to Recently Deleted (30 days), never
+   deleted for good. If you say no in that prompt, nothing changes. After a delete, the
+   ones you unselected are kept for good and never offered again, and the tab disappears
+   once you leave it empty.
+
 **Reading one image** (the extraction step):
 
 1. The app builds a prompt (Spanish + English) that includes the day the screenshot was
@@ -108,7 +130,8 @@ correct, or wrong and what it should have been. Marks are saved to
 SlothRoll/
   App/         SlothRollApp (entry), AppDependencies (composition root, builds the action
                performers), RootView (onboarding until done, then TabView: Scan,
-               Expenses, Settings; hosts the debug eval sheet)
+               Expenses, Clean up (only with candidates), Settings; hosts the debug eval
+               sheet), RootTab
   Features/    one folder per screen (View + @Observable @MainActor ViewModel)
     Onboarding/ OnboardingView (paged: 2 intro pages + download), OnboardingPage,
                ModelDownloadView, OnboardingViewModel (check / download / retry),
@@ -120,16 +143,24 @@ SlothRoll/
                type), TypeBadge, ScanConfig
     Expenses/  ExpenseListView (@Query of expenses, totals on top), ExpensesViewModel,
                CurrencyTotal
+    Cleanup/   CleanupView (@Query of items with a cleanup reason, grid + delete bar),
+               CleanupCell, CleanupReasonBadge, CleanupViewModel (selection, thumbnails,
+               delete via PhotoLibraryProviding, keep the unselected), CleanupConfig
     Settings/  SettingsView (scan limit, rescan, model info, debug section),
                SettingsViewModel, ScanStatsSection (DEBUG only)
     Debug/     (DEBUG only) EvalView, EvalRowView, EvalViewModel, EvalRow, EvalMark,
                EvalSummary, EvalReport, EvalReportStore, EvalConfig,
                PreviewVLM + PreviewPhotoLibrary (fakes for SwiftUI previews)
-  Pipeline/    ScanCoordinator (@Observable @MainActor: triage pass, then extraction pass),
+  Pipeline/    ScanCoordinator (@Observable @MainActor: triage pass, then extraction pass,
+               then cleanup pass), CleanupJudge (blur + duplicate rules, "still useful?"
+               question), ImageAnalyzing + ImageAnalyzer (Laplacian blur score, Vision
+               feature print) + ImageSignals, DuplicateFinder (union-find over feature-print
+               distance, keeps newest), UsefulnessQuestion (prompt + yes/no reader),
                ScanStore (SwiftData reads/writes for the scan), ScanPhase, ScanStats,
                Extractor (VLM + parse + retry), ExtractionPrompt, ResultParser,
                ExtractionReport, ImageTriaging + Triage (Vision OCR, 20+ chars) + TextScan,
-               PhotoLibraryProviding + PhotoLibrary (PhotoKit) + PhotoAccess + LibraryImage
+               PhotoLibraryProviding + PhotoLibrary (PhotoKit, incl. deleteAssets) +
+               PhotoAccess + LibraryImage
                + ImageSource, PipelineError, PipelineConfig
   Inference/   VLMService (actor: isDownloaded / download / load / describe / unload),
                ModelCatalog, InferenceConfig, InferenceError,
@@ -140,7 +171,8 @@ SlothRoll/
   Models/      ActionResult (+Dates: "YYYY-MM-DD"/"HH:mm" <-> Date), ActionType, Currency
                (+Format), Confidence, ActionOutcome, VLMServing (protocol)
   Storage/     ScreenshotItem (@Model: assetID unique, status, skip reason, result JSON,
-               capturedAt, processedAt), Expense (@Model), ScanStatus, SkipReason,
+               capturedAt, processedAt, sharpness/contrast/feature print, cleanup reason,
+               checked/kept dates), Expense (@Model), ScanStatus, SkipReason, CleanupReason,
                Persistence (container; falls back to in-memory if the store won't open)
   Shared/      Log (os.Logger categories), MemoryProbe, Duration+Seconds, Toast +
                ToastOverlay (`.toast(_:duration:)`), SettingsKey (@AppStorage keys)
@@ -149,12 +181,13 @@ SlothRoll/
 SlothRollTests/
   ParserTests/     ResultParserTests
   PipelineTests/   ExtractorTests (scripted fake VLM), ExtractionPromptTests,
-                   ImageSourceTests, ScanCoordinatorTests + ScanFakes
+                   ImageSourceTests, ScanCoordinatorTests (+ cleanup suite) + ScanFakes,
+                   DuplicateFinderTests, ImageAnalyzerTests, UsefulnessQuestionTests
   StorageTests/    ScreenshotItemTests
   ActionsTests/    EventDraftTests, ReceiptActionTests, PlaceActionTests
   FeaturesTests/   EvalSummaryTests, CardStackViewModelTests (fake performer),
                    CardTextTests, ExpensesViewModelTests, OnboardingViewModelTests,
-                   ScanViewModelTests
+                   ScanViewModelTests, CleanupViewModelTests
 ```
 
 Data flow on first launch:
@@ -171,9 +204,13 @@ Data flow for a scan:
 `ScanCoordinator.scan(limit:)`:
 `PhotoLibrary.recentImageIDs` (newest 500) minus `ScanStore.knownAssetIDs` →
 for each, `PhotoLibrary.loadImage` (1024 px + thumbnail + `ImageSource`) → camera? record
-skipped : `Triage.isCandidate` → `ScanStore.record` (triaged / skipped) → … up to the limit →
-`VLMServing.load()` → for each `triaged` item: `Extractor` → `ScanStore.complete`
-(extracted / skipped "none" / failed) → `VLMServing.unload()`. The card stack reads
+skipped : `Triage.isCandidate` + `ImageAnalyzer.signals` → `ScanStore.record` (triaged /
+skipped, with blur + feature print) → … up to the limit → skipped items from before the
+cleanup feature get measured (no model yet) → `VLMServing.load()` → for each `triaged`
+item: `Extractor` → `ScanStore.complete` (extracted / skipped "none" / failed) →
+`CleanupJudge.applyRules()` (`DuplicateFinder` off the main actor, then blur) → for each
+unjudged skipped item: `CleanupJudge.ask` (`UsefulnessQuestion`, same loaded model; loads
+it only if extraction had nothing to read) → `VLMServing.unload()`. The card stack reads
 `extracted` items through `@Query`, so new cards appear as each item is saved. No Photos
 access ends in `ScanPhase.noPhotoAccess`; a failed load in `.modelLoadFailed(message:)`.
 **Rescan everything**: `SettingsViewModel` → `ScanCoordinator.resetCache()` →
@@ -188,13 +225,20 @@ all behind `ActionPerformer`) → `ActionOutcome` → item `done` + toast + succ
 `ActionError` keeps the item `extracted` and shows its message. Skip → item `skipped`.
 `EditSheet` → `CardStackViewModel.save(_:for:)` rewrites the item's result.
 `ExpenseListView` reads `Expense` through `@Query`; `ExpensesViewModel` sums per currency.
+A left swipe also records `SkipReason.swipedLeft`, which makes the card eligible for cleanup.
+
+Data flow for cleanup: `RootView` `@Query`s items with a `cleanupReasonRaw` to show or hide
+the tab → `CleanupView` grid → `CleanupViewModel.deleteSelected` →
+`PhotoLibraryProviding.deleteAssets` (`PHAssetChangeRequest.deleteAssets`, iOS confirms; a
+`userCancelled` error means "declined") → deleted items' `ScreenshotItem`s removed, the
+unselected get `cleanupKeptAt` and leave the pile.
 
 Eval flow (debug): `EvalView` → `EvalViewModel` → `PhotoLibrary` → `Triage` (OCR, timing)
 → `Extractor` → row on screen + `eval-report.json`.
 
 `AppDependencies.live` builds the one `VLMService`, the SwiftData container, and the
 `ScanCoordinator`, and hands services out as protocols (`VLMServing`, `PhotoLibraryProviding`,
-`ImageTriaging`), so features never import Inference and tests swap in a fake.
+`ImageTriaging`, `ImageAnalyzing`), so features never import Inference and tests swap in a fake.
 
 Layer rules (dependencies point downward only) are listed in `CLAUDE.md`.
 
@@ -250,9 +294,16 @@ The Xcode project is generated from `project.yml` with XcodeGen. The generated
    `devicectl ... copy from` command as step 8, with `--source Documents/scan-stats.json`. Keep the phone
    unlocked; the scan screen also keeps it awake while running.
 
+11. Clean up: no new permission or Info.plist key. The app already asks for read-write
+   Photos access; deleting always shows iOS's own confirmation and items land in
+   Recently Deleted. With limited access only the photos you picked can be deleted. To
+   tune the blur or duplicate thresholds (`PipelineConfig`), watch the `analyze
+   sharpness=` debug logs in Console while scanning.
+
 Logs: Console.app, filter subsystem `SlothRoll`, category `eval` (per-image timings and the
-run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory warnings),
-`storage`, `scan`, `onboarding`, `settings`, or `inference`.
+run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory warnings,
+`analyze sharpness=` per image at debug level, `cleanup_rules`, `cleanup_ask`), `cleanup`
+(deletes, counts only), `storage`, `scan`, `onboarding`, `settings`, or `inference`.
 
 ## Dev log
 
@@ -483,3 +534,40 @@ run summary), `pipeline` (attempts, parse failures, `scan_done` summary, memory 
   model…" as progress. No free-space check before the 1.8 GB download. Cancelling the
   download isn't possible (leaving the app pauses it; Retry resumes from the cache).
   Haptics not felt on hardware yet.
+
+### 2026-10-21 (day 6): Clean up pile for useless screenshots
+
+- Built: blur score (Laplacian variance on a 512 px grayscale copy, plus a contrast guard so
+  blank screens aren't "blurry") and a Vision feature print (revision 2) computed during
+  triage while the image is already loaded, saved on `ScreenshotItem`. After extraction,
+  `CleanupJudge` groups near-duplicates among skipped items (`DuplicateFinder`, Euclidean
+  distance < 0.25, transitive groups, newest kept), marks blurry ones, and asks the loaded
+  VLM "Is this screenshot still useful to keep? Answer only yes or no." for the rest (only
+  a clear "no" counts). New **Clean up** tab (only when there are candidates, with a badge):
+  grid with reason badges, all selected, select/deselect all, "Delete N screenshots" via
+  `PHAssetChangeRequest.deleteAssets` (iOS confirmation, Recently Deleted). Unselected items
+  are kept for good after a delete. Left swipes now record `SkipReason.swipedLeft`.
+  Skipped items scanned before today are measured on the next scan before the model loads.
+- Files added: `Storage/CleanupReason.swift`, `Pipeline/{ImageSignals,ImageAnalyzing,
+  ImageAnalyzer,DuplicateFinder,UsefulnessQuestion,CleanupJudge}.swift`,
+  `Features/Cleanup/{CleanupView,CleanupCell,CleanupReasonBadge,CleanupViewModel,
+  CleanupConfig}.swift`, `App/RootTab.swift`, tests `PipelineTests/{DuplicateFinderTests,
+  ImageAnalyzerTests,UsefulnessQuestionTests}.swift`, `FeaturesTests/CleanupViewModelTests.swift`.
+  Changed: `Storage/{ScreenshotItem,SkipReason}.swift`, `Pipeline/{ScanCoordinator,ScanStore,
+  ScanPhase,ScanStats,PipelineConfig,PipelineError,PhotoLibrary,PhotoLibraryProviding,
+  Extractor}.swift`, `App/{AppDependencies,RootView}.swift`, `Features/Scan/{ScanView,
+  ScanViewModel,CardStackViewModel}.swift`, `Features/Settings/ScanStatsSection.swift`,
+  `Features/Debug/PreviewPhotoLibrary.swift`, `Shared/Log.swift`, test fakes,
+  `SlothRoll.xcodeproj` (XcodeGen). Removed `Features/Cleanup/.gitkeep`.
+- Decisions: the model's "none" items count as leftovers too (memes and chats are the best
+  cleanup targets), not only triage skips and left swipes. The coordinator now loads the
+  model at most once per scan and unloads at the end, so extraction and the cleanup
+  question share one load. `ScanCoordinator` is 257 lines after moving the log line into
+  `ScanStats` and sharing one per-photo loop.
+- Tests: 98 pass (simulator). Device build: no warnings from app code.
+- Known issues: thresholds (blur 50, flat contrast 8, duplicate 0.25) are educated guesses,
+  not measured on the phone yet. Duplicate grouping compares every pair of skipped
+  screenshots each scan (fine for hundreds, slow for many thousands). Left swipes are
+  judged on the next scan, not right away. An asset deleted outside the app still shows in
+  the grid with a blank thumbnail until you delete it there. The SwiftData store gained
+  fields (lightweight migration) — not yet opened on the phone with day-5 data.

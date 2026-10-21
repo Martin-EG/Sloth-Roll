@@ -4,7 +4,8 @@ import ImageIO
 import Photos
 import UIKit
 
-/// Live PhotoKit implementation of `PhotoLibraryProviding`. Never downloads from iCloud.
+/// Live PhotoKit implementation of `PhotoLibraryProviding`. Never downloads from iCloud, and
+/// never deletes permanently: deleted assets go to Recently Deleted.
 struct PhotoLibrary: PhotoLibraryProviding {
     func requestAccess() async -> PhotoAccess {
         switch await PHPhotoLibrary.requestAuthorization(for: .readWrite) {
@@ -75,6 +76,26 @@ struct PhotoLibrary: PhotoLibraryProviding {
             ) { image, _ in
                 continuation.resume(returning: image?.cgImage)
             }
+        }
+    }
+
+    /// `PHAssetChangeRequest.deleteAssets` makes iOS ask the user first; the assets then sit
+    /// in Recently Deleted for 30 days.
+    func deleteAssets(ids: [String]) async throws(PipelineError) -> Bool {
+        guard PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil).count > 0 else {
+            return true
+        }
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                PHAssetChangeRequest.deleteAssets(
+                    PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil))
+            }
+            return true
+        } catch let error as PHPhotosError where error.code == .userCancelled {
+            return false
+        } catch {
+            Log.pipeline.error("delete_failed error=\(String(describing: error), privacy: .public)")
+            throw .deleteFailed
         }
     }
 

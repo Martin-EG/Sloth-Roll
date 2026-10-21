@@ -9,6 +9,9 @@ enum ScanPhase: Equatable, Sendable {
     case loadingModel
     /// The model reads each candidate.
     case extract
+    /// Measuring older skipped screenshots, then asking the model whether leftovers are
+    /// still useful, to fill the Clean up tab.
+    case cleanup
     /// Finished normally.
     case finished
     /// The user stopped it; work so far is saved.
@@ -23,8 +26,12 @@ enum ScanPhase: Equatable, Sendable {
 
     var isRunning: Bool {
         switch self {
-        case .preparing, .triage, .loadingModel, .extract: true
+        case .preparing, .triage, .loadingModel, .extract, .cleanup: true
         case .idle, .finished, .cancelled, .pausedForMemory, .noPhotoAccess, .modelLoadFailed: false
         }
+    }
+
+    var isModelLoadFailure: Bool {
+        if case .modelLoadFailed = self { true } else { false }
     }
 }

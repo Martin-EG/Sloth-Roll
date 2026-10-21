@@ -24,5 +24,7 @@ struct PreviewPhotoLibrary: PhotoLibraryProviding {
     func loadPreview(assetID: String, maxPixels: Int) async -> CGImage? {
         PreviewVLM.sampleImage()
     }
+
+    func deleteAssets(ids: [String]) async throws(PipelineError) -> Bool { true }
 }
 #endif

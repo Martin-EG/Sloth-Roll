@@ -12,6 +12,8 @@ enum PipelineError: LocalizedError, Equatable, Sendable {
     case missingTitle
     case photoAccessDenied
     case albumNotFound(String)
+    /// Photos refused the deletion for a reason other than the user tapping "Don't Allow".
+    case deleteFailed
 
     var errorDescription: String? {
         switch self {
@@ -22,6 +24,8 @@ enum PipelineError: LocalizedError, Equatable, Sendable {
             "Sloth Roll needs access to your photos. Allow it in Settings."
         case .albumNotFound(let name):
             "No album named “\(name)” was found."
+        case .deleteFailed:
+            "Couldn't delete the screenshots. Try again."
         }
     }
 }

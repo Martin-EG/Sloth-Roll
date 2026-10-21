@@ -26,11 +26,48 @@ struct ScanStore {
     }
 
     func record(
-        assetID: String, status: ScanStatus, skipReason: SkipReason? = nil, capturedAt: Date?
+        assetID: String, status: ScanStatus, skipReason: SkipReason? = nil, capturedAt: Date?,
+        signals: ImageSignals? = nil
     ) {
-        context.insert(
-            ScreenshotItem(
-                assetID: assetID, status: status, skipReason: skipReason, capturedAt: capturedAt))
+        let item = ScreenshotItem(
+            assetID: assetID, status: status, skipReason: skipReason, capturedAt: capturedAt)
+        if let signals { apply(signals, to: item) }
+        context.insert(item)
+        save()
+    }
+
+    // MARK: Cleanup
+
+    /// Skipped screenshots the cleanup rules may offer for deletion: not camera photos, not
+    /// ones the user chose to keep.
+    func cleanupEligibleItems() -> [ScreenshotItem] {
+        let skipped = ScanStatus.skipped.rawValue
+        let descriptor = FetchDescriptor<ScreenshotItem>(
+            predicate: #Predicate { $0.statusRaw == skipped },
+            sortBy: [SortDescriptor(\.capturedAt, order: .reverse)])
+        return ((try? context.fetch(descriptor)) ?? [])
+            .filter { $0.skipReason != .camera && $0.cleanupKeptAt == nil }
+    }
+
+    /// Items currently offered in the Clean up tab.
+    func cleanupCandidateCount() -> Int {
+        let descriptor = FetchDescriptor<ScreenshotItem>(
+            predicate: #Predicate { $0.cleanupReasonRaw != nil })
+        return (try? context.fetchCount(descriptor)) ?? 0
+    }
+
+    func setSignals(_ signals: ImageSignals, on item: ScreenshotItem) {
+        apply(signals, to: item)
+        save()
+    }
+
+    func setCleanupReason(_ reason: CleanupReason?, on item: ScreenshotItem) {
+        item.cleanupReason = reason
+        item.cleanupCheckedAt = Date()
+        save()
+    }
+
+    func saveChanges() {
         save()
     }
 
@@ -59,6 +96,12 @@ struct ScanStore {
             Log.storage.error("delete_failed error=\(String(describing: error), privacy: .public)")
         }
         save()
+    }
+
+    private func apply(_ signals: ImageSignals, to item: ScreenshotItem) {
+        item.sharpness = signals.sharpness
+        item.contrast = signals.contrast
+        item.featurePrint = signals.featurePrint.map(ImageSignals.data(from:))
     }
 
     private func save() {

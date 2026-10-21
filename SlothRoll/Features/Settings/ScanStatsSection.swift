@@ -13,6 +13,8 @@ struct ScanStatsSection: View {
             LabeledContent(
                 "Actions / none / failed",
                 value: "\(stats.extracted) / \(stats.noAction) / \(stats.failed)")
+            LabeledContent(
+                "Clean up asked / offered", value: "\(stats.cleanupAsked) / \(stats.cleanupCandidates)")
             if stats.cameraSkipped + stats.unavailable > 0 {
                 LabeledContent(
                     "Camera / iCloud-only skipped",
@@ -20,8 +22,11 @@ struct ScanStatsSection: View {
             }
             LabeledContent("Total time", value: seconds(stats.totalSeconds))
             LabeledContent(
-                "Triage / load / read",
-                value: [stats.triageSeconds, stats.modelLoadSeconds, stats.extractSeconds]
+                "Triage / load / read / clean up",
+                value: [
+                    stats.triageSeconds, stats.modelLoadSeconds, stats.extractSeconds,
+                    stats.cleanupSeconds,
+                ]
                     .map(seconds).joined(separator: " / "))
             if let perRead = stats.secondsPerRead {
                 LabeledContent("Per image read", value: seconds(perRead))

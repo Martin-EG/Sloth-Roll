@@ -30,4 +30,20 @@ enum PipelineConfig {
     /// Newest library images looked at per scan; already-seen and camera photos are skipped
     /// inside this window, so it bounds the work when the library is mostly camera photos.
     static let libraryScanWindow = 500
+
+    // MARK: Cleanup
+
+    /// Longest side, in pixels, of the grayscale copy the blur score is measured on.
+    static let blurImageMaxPixels = 512
+
+    /// Laplacian variance (0-255 grayscale) below this counts as blurry. Text screenshots
+    /// score in the thousands; tune with the `analyze sharpness=` debug log on device.
+    static let blurSharpnessThreshold = 50.0
+
+    /// Pixel standard deviation below this is a flat image (blank screen), not a blurry one.
+    static let flatContrastThreshold = 8.0
+
+    /// Euclidean distance between revision-2 feature prints under which two screenshots are
+    /// near-duplicates. Kept low on purpose: a false match offers a real screenshot for deletion.
+    static let duplicateDistanceThreshold: Float = 0.25
 }

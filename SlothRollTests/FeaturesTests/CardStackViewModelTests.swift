@@ -69,6 +69,7 @@ struct CardStackViewModelTests {
 
         #expect(makeViewModel().skip(item))
         #expect(item.status == .skipped)
+        #expect(item.skipReason == .swipedLeft)
     }
 
     @Test func editReplacesTheResult() throws {

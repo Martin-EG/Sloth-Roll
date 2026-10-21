@@ -110,7 +110,7 @@ struct ScanView: View {
     let library = PreviewPhotoLibrary()
     let coordinator = ScanCoordinator(
         vlm: PreviewVLM(delay: .milliseconds(300)), photoLibrary: library,
-        triage: Triage(), modelContext: container.mainContext)
+        triage: Triage(), analyzer: ImageAnalyzer(), modelContext: container.mainContext)
     let cards = CardStackViewModel(
         performers: [:], photoLibrary: library, context: container.mainContext)
     NavigationStack {

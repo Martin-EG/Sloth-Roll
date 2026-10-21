@@ -16,6 +16,8 @@ enum Log {
     static let onboarding = Logger(subsystem: subsystem, category: "onboarding")
     /// Settings screen: scan limit and rescan.
     static let settings = Logger(subsystem: subsystem, category: "settings")
+    /// Clean up screen: deletions and keeps (counts only).
+    static let cleanup = Logger(subsystem: subsystem, category: "cleanup")
     /// Expenses screen.
     static let expenses = Logger(subsystem: subsystem, category: "expenses")
     /// Debug eval screen: per-image timings and the run summary.

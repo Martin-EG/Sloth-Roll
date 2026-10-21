@@ -54,10 +54,12 @@ final class CardStackViewModel {
         }
     }
 
-    /// Marks the card `skipped`; it never comes back.
+    /// Marks the card `skipped` (swiped left); it never comes back as a card.
     @discardableResult
     func skip(_ item: ScreenshotItem) -> Bool {
         guard !isPerforming else { return false }
+        // The next scan offers it in the Clean up tab if it's blurry, a duplicate, or useless.
+        item.skipReason = .swipedLeft
         finish(item, as: .skipped)
         toast = Toast(message: "Skipped.", isError: false)
         Log.scan.info("card_skipped")

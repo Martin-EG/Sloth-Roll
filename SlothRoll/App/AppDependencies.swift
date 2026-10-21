@@ -5,7 +5,7 @@ import SwiftData
 final class AppDependencies {
     static let live = AppDependencies(
         vlm: VLMService(), photoLibrary: PhotoLibrary(), triage: Triage(),
-        modelContainer: Persistence.makeContainer())
+        analyzer: ImageAnalyzer(), modelContainer: Persistence.makeContainer())
 
     let vlm: any VLMServing
     let photoLibrary: any PhotoLibraryProviding
@@ -17,14 +17,14 @@ final class AppDependencies {
     /// `actionPerformers` defaults to the live EventKit / Maps / SwiftData ones.
     init(
         vlm: any VLMServing, photoLibrary: any PhotoLibraryProviding,
-        triage: any ImageTriaging, modelContainer: ModelContainer,
+        triage: any ImageTriaging, analyzer: any ImageAnalyzing, modelContainer: ModelContainer,
         actionPerformers: [ActionType: any ActionPerformer]? = nil
     ) {
         self.vlm = vlm
         self.photoLibrary = photoLibrary
         self.modelContainer = modelContainer
         self.scanCoordinator = ScanCoordinator(
-            vlm: vlm, photoLibrary: photoLibrary, triage: triage,
+            vlm: vlm, photoLibrary: photoLibrary, triage: triage, analyzer: analyzer,
             modelContext: modelContainer.mainContext)
         self.actionPerformers =
             actionPerformers ?? [

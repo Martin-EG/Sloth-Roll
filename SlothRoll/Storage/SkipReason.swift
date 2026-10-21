@@ -6,4 +6,6 @@ enum SkipReason: String, Codable, Sendable, CaseIterable {
     case littleText
     /// The model read it and found no action (type "none").
     case noAction
+    /// The user swiped its card left.
+    case swipedLeft
 }

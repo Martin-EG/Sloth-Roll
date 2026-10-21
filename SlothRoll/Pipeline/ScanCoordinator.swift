@@ -4,9 +4,10 @@ import Observation
 import SwiftData
 import UIKit
 
-/// Runs a scan from the photo library to stored results: triage every new image first (OCR),
-/// then load the extraction model and read only the candidates, one image at a time. Each
-/// item is saved the moment it's done, so a crash or stop mid-scan loses nothing.
+/// Runs a scan from the photo library to stored results: triage every new image first (OCR,
+/// blur, feature print), then load the extraction model and read only the candidates, one
+/// image at a time, then fill the Clean up tab (rules, then "still useful?" for leftovers).
+/// Each item is saved the moment it's done, so a crash or stop mid-scan loses nothing.
 @Observable
 @MainActor
 final class ScanCoordinator {
@@ -28,21 +29,26 @@ final class ScanCoordinator {
     private let vlm: any VLMServing
     private let photoLibrary: any PhotoLibraryProviding
     private let triage: any ImageTriaging
+    private let analyzer: any ImageAnalyzing
     private let extractor: Extractor
     private let store: ScanStore
+    private let cleanup: CleanupJudge
     private let limit: Int
     private var stopRequest: StopRequest?
+    private var isModelLoaded = false
 
     init(
         vlm: any VLMServing, photoLibrary: any PhotoLibraryProviding,
-        triage: any ImageTriaging, modelContext: ModelContext,
+        triage: any ImageTriaging, analyzer: any ImageAnalyzing, modelContext: ModelContext,
         limit: Int = PipelineConfig.scanLimit
     ) {
         self.vlm = vlm
         self.photoLibrary = photoLibrary
         self.triage = triage
+        self.analyzer = analyzer
         self.extractor = Extractor(vlm: vlm)
         self.store = ScanStore(context: modelContext)
+        self.cleanup = CleanupJudge(vlm: vlm, store: store)
         self.limit = limit
         // The coordinator lives as long as the app, so the observer is never removed.
         NotificationCenter.default.addObserver(
@@ -71,16 +77,21 @@ final class ScanCoordinator {
         }
 
         await runTriage(stats: &stats, limit: limit ?? self.limit, clock: clock)
-        if stopRequest == nil {
-            await runExtraction(stats: &stats, clock: clock)
+        if stopRequest == nil { await measureOlderSkippedItems(stats: &stats) }
+        if stopRequest == nil { await runExtraction(stats: &stats, clock: clock) }
+        if stopRequest == nil, !phase.isModelLoadFailure { await runCleanup(stats: &stats, clock: clock) }
+        if isModelLoaded {
+            // One model at a time, and the swipe UI doesn't need it: free the ~2 GB now.
+            await vlm.unload()
+            isModelLoaded = false
         }
 
         currentThumbnail = nil
         stats.totalSeconds = start.duration(to: clock.now).seconds
         stats.peakFootprintBytes = MemoryProbe.peakFootprintBytes()
         lastStats = stats
-        log(stats)
-        if case .modelLoadFailed = phase { return }
+        stats.log(stop: stopRequest.map { String(describing: $0) } ?? "none")
+        if phase.isModelLoadFailure { return }
         phase =
             switch stopRequest {
             case .cancel: .cancelled
@@ -113,7 +124,8 @@ final class ScanCoordinator {
 
     // MARK: - Phases
 
-    /// OCR on every new image before any model is loaded. Camera photos are recorded as
+    /// OCR, blur, and feature print on every new image before any model is loaded (the image
+    /// is already in memory, so cleanup never loads it twice). Camera photos are recorded as
     /// skipped and don't count toward `limit`.
     private func runTriage(stats: inout ScanStats, limit: Int, clock: ContinuousClock) async {
         let start = clock.now
@@ -139,9 +151,11 @@ final class ScanCoordinator {
             }
             currentThumbnail = photo.thumbnail
             let isCandidate = await triage.isCandidate(photo.image)
+            let signals = await analyzer.signals(for: photo.image)
             store.record(
                 assetID: assetID, status: isCandidate ? .triaged : .skipped,
-                skipReason: isCandidate ? nil : .littleText, capturedAt: photo.capturedAt)
+                skipReason: isCandidate ? nil : .littleText, capturedAt: photo.capturedAt,
+                signals: signals)
             stats.triaged += 1
             stats.candidates += isCandidate ? 1 : 0
             progress.done = stats.triaged
@@ -153,10 +167,18 @@ final class ScanCoordinator {
         // Triage is Vision OCR: there is no triage model to unload before extraction.
     }
 
-    private func runExtraction(stats: inout ScanStats, clock: ContinuousClock) async {
-        let queue = store.itemsAwaitingExtraction()
-        guard !queue.isEmpty else { return }
+    /// Blur and feature print for skipped items triaged before cleanup existed (or whose
+    /// analysis failed), so the cleanup rules can judge them. Runs before the model loads.
+    private func measureOlderSkippedItems(stats: inout ScanStats) async {
+        await forEachPhoto(of: cleanup.itemsMissingSignals(), in: .cleanup, stats: &stats) {
+            item, photo, _ in
+            if let signals = await analyzer.signals(for: photo.image) { store.setSignals(signals, on: item) }
+        }
+    }
 
+    /// Loads the model once per scan. False (and `phase` says why) when it can't load.
+    private func loadModelIfNeeded(stats: inout ScanStats, clock: ContinuousClock) async -> Bool {
+        if isModelLoaded { return true }
         phase = .loadingModel
         let loadStart = clock.now
         do {
@@ -164,22 +186,21 @@ final class ScanCoordinator {
         } catch {
             Log.pipeline.error("scan_model_load_failed error=\(String(describing: error), privacy: .public)")
             phase = .modelLoadFailed(message: error.localizedDescription)
-            return
+            return false
         }
-        stats.modelLoadSeconds = loadStart.duration(to: clock.now).seconds
+        isModelLoaded = true
+        stats.modelLoadSeconds += loadStart.duration(to: clock.now).seconds
         stats.sampleMemory()
+        return true
+    }
 
-        phase = .extract
-        progress = (0, queue.count)
+    private func runExtraction(stats: inout ScanStats, clock: ContinuousClock) async {
+        let queue = store.itemsAwaitingExtraction()
+        guard !queue.isEmpty, await loadModelIfNeeded(stats: &stats, clock: clock) else { return }
+
         let extractStart = clock.now
-        for item in queue {
-            if stopRequest != nil { break }
-            // Not on the device any more: stays `triaged` and is retried next scan.
-            guard let photo = await photoLibrary.loadImage(assetID: item.assetID) else {
-                stats.unavailable += 1
-                continue
-            }
-            currentThumbnail = photo.thumbnail
+        // An item no longer on the device stays `triaged` and is retried next scan.
+        await forEachPhoto(of: queue, in: .extract, stats: &stats) { item, photo, stats in
             let report = await extractor.extractWithReport(
                 image: photo.image, capturedAt: photo.capturedAt)
             store.complete(item, with: report)
@@ -191,28 +212,46 @@ final class ScanCoordinator {
             } else {
                 stats.extracted += 1
             }
+        }
+        stats.extractSeconds = extractStart.duration(to: clock.now).seconds
+    }
+
+    /// Rules first (no model), then the "still useful?" question for what's left, reusing the
+    /// model extraction loaded (or loading it if extraction had nothing to read).
+    private func runCleanup(stats: inout ScanStats, clock: ContinuousClock) async {
+        let start = clock.now
+        await cleanup.applyRules()
+        let queue = cleanup.itemsToAsk()
+        if !queue.isEmpty, await loadModelIfNeeded(stats: &stats, clock: clock) {
+            // An item no longer on the device stays unjudged and is asked about next scan.
+            await forEachPhoto(of: queue, in: .cleanup, stats: &stats) { item, photo, stats in
+                await cleanup.ask(about: item, image: photo.image)
+                stats.cleanupAsked += 1
+            }
+        }
+        stats.cleanupCandidates = cleanup.candidateCount()
+        stats.cleanupSeconds = start.duration(to: clock.now).seconds
+    }
+
+    /// Loads each item's image in turn and hands it to `work`, updating progress and the
+    /// thumbnail; stops after the current item on a stop request.
+    private func forEachPhoto(
+        of items: [ScreenshotItem], in phase: ScanPhase, stats: inout ScanStats,
+        _ work: @MainActor (ScreenshotItem, LibraryImage, inout ScanStats) async -> Void
+    ) async {
+        guard !items.isEmpty else { return }
+        self.phase = phase
+        progress = (0, items.count)
+        for item in items {
+            if stopRequest != nil { break }
+            guard let photo = await photoLibrary.loadImage(assetID: item.assetID) else {
+                stats.unavailable += 1
+                continue
+            }
+            currentThumbnail = photo.thumbnail
+            await work(item, photo, &stats)
             progress.done += 1
             stats.sampleMemory()
         }
-        stats.extractSeconds = extractStart.duration(to: clock.now).seconds
-        // One model at a time, and the swipe UI doesn't need it: free the ~2 GB now.
-        await vlm.unload()
-    }
-
-    private func log(_ stats: ScanStats) {
-        let peakMB = Double(stats.peakFootprintBytes ?? 0) / 1_048_576
-        let sampledMB = Double(stats.maxSampledFootprintBytes) / 1_048_576
-        Log.pipeline.info(
-            """
-            scan_done new=\(stats.newImages) triaged=\(stats.triaged) candidates=\(stats.candidates) \
-            camera=\(stats.cameraSkipped) unavailable=\(stats.unavailable) reads=\(stats.modelReads) \
-            extracted=\(stats.extracted) none=\(stats.noAction) failed=\(stats.failed) \
-            triage_s=\(stats.triageSeconds, format: .fixed(precision: 2)) \
-            load_s=\(stats.modelLoadSeconds, format: .fixed(precision: 2)) \
-            extract_s=\(stats.extractSeconds, format: .fixed(precision: 2)) \
-            total_s=\(stats.totalSeconds, format: .fixed(precision: 2)) \
-            peak_mb=\(peakMB, format: .fixed(precision: 0)) sampled_mb=\(sampledMB, format: .fixed(precision: 0)) \
-            stop=\(String(describing: self.stopRequest), privacy: .public)
-            """)
     }
 }
