@@ -312,3 +312,14 @@
 - Known issues: the Clean up tab offers candidates from every scan, not only the chosen
   album. Not tried on the phone yet (album list speed with many albums, the new onboarding
   page on a small screen). Screenshots/GIF placeholders from day 7 still open.
+
+### 2026-10-23 (day 8, cont.): screenshots and demo video in the README
+
+- README: demo video link (YouTube Short; the thumbnail links to it) replaces the
+  placeholder, and the Screenshots section shows four phone screenshots (onboarding, album
+  page, album picker, a scan with an event card). The two HEIC captures were converted to
+  PNG because GitHub and DEV don't show HEIC.
+- Files added: `public/{Onboarding-screen.PNG,onboarding-select-album-screen.PNG,
+  selecting-album.png,reading-screenshots.png}`. Changed: `README.md`. No code changed.
+- Known issues: no screenshot of the Expenses or Clean up tabs yet. The original `.HEIC`
+  files are left out of git.

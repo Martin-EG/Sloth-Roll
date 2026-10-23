@@ -15,8 +15,9 @@ things you meant to do later. Sloth Roll does the slow, boring part for you, one
 time, on your phone, and waits. You don't type, copy, paste, or switch apps. You only
 swipe, whenever you feel like it.
 
-<!-- Replace with a GIF of a scan and a few swipes (e.g. public/sloth-roll-demo.gif). -->
-_Demo GIF coming soon._ **Demo video:** _link coming soon_ <!-- paste the video link here -->
+[![Sloth Roll demo video on YouTube](https://img.youtube.com/vi/mwsLE8IcGfI/hqdefault.jpg)](https://youtube.com/shorts/mwsLE8IcGfI)
+
+**Demo video:** [youtube.com/shorts/mwsLE8IcGfI](https://youtube.com/shorts/mwsLE8IcGfI)
 
 | The screenshot shows | Swipe right and… |
 | --- | --- |
@@ -94,8 +95,9 @@ SlothRoll/         The app (SwiftUI, Swift 6, iOS 18+)
   Shared/          Logger categories, toast, small extensions
   Resources/       Assets, Info.plist, entitlements
 SlothRollTests/    102 unit tests, same folders as the app
-docs/              How it works in detail, architecture, Xcode setup, debug tools and eval
-public/            Banner and icon for this README
+docs/              How it works in detail, architecture, Xcode setup, debug tools and eval,
+                   dev log
+public/            Banner, icon and screenshots for this README
 project.yml        XcodeGen spec (the generated SlothRoll.xcodeproj is committed)
 ```
 
@@ -126,11 +128,9 @@ builds only): [docs/debug-and-eval.md](docs/debug-and-eval.md).
 
 ## Screenshots
 
-<!-- Replace with real screenshots (PNG in public/) before submitting. -->
-
-| Onboarding | Swipe cards | Expenses | Clean up |
+| First launch | Scan one album | Pick what to read | Reading and swiping |
 | --- | --- | --- | --- |
-| _screenshot_ | _screenshot_ | _screenshot_ | _screenshot_ |
+| <img src="public/Onboarding-screen.PNG" width="200" alt="Onboarding: You take screenshots. Sloth Roll does the rest."> | <img src="public/onboarding-select-album-screen.PNG" width="200" alt="Onboarding: Scan one album, then clean it up."> | <img src="public/selecting-album.png" width="200" alt="Scan from sheet: all recent photos or one album"> | <img src="public/reading-screenshots.png" width="200" alt="Scan in progress with an event card ready to add"> |
 
 ## Known limitations
 
