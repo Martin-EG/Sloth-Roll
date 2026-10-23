@@ -9,6 +9,14 @@ protocol PhotoLibraryProviding: Sendable {
     /// Local identifiers of the newest images in the library (all sources), newest first.
     func recentImageIDs(limit: Int) async -> [String]
 
+    /// Albums worth scanning: Photos' Screenshots album first, then the user's own albums by
+    /// title. Empty albums are left out.
+    func albums() async -> [PhotoAlbum]
+
+    /// Local identifiers of the newest images in one album, newest first. Empty if the album
+    /// is gone.
+    func imageIDs(inAlbumID albumID: String, limit: Int) async -> [String]
+
     /// Local identifiers of every image in the album with this exact title, oldest first.
     func assetIDs(inAlbum title: String) async throws(PipelineError) -> [String]
 

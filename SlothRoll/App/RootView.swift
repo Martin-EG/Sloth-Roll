@@ -26,7 +26,8 @@ struct RootView: View {
         self.dependencies = dependencies
         let context = dependencies.modelContainer.mainContext
         _onboardingViewModel = State(initialValue: OnboardingViewModel(vlm: dependencies.vlm))
-        _scanViewModel = State(initialValue: ScanViewModel(coordinator: dependencies.scanCoordinator))
+        _scanViewModel = State(initialValue: ScanViewModel(
+                coordinator: dependencies.scanCoordinator, photoLibrary: dependencies.photoLibrary))
         _cardStackViewModel = State(
             initialValue: CardStackViewModel(
                 performers: dependencies.actionPerformers,

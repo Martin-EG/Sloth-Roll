@@ -24,6 +24,41 @@ struct PhotoLibrary: PhotoLibraryProviding {
         return Self.identifiers(of: PHAsset.fetchAssets(with: options))
     }
 
+    func albums() async -> [PhotoAlbum] {
+        let screenshots = PHAssetCollection.fetchAssetCollections(
+            with: .smartAlbum, subtype: .smartAlbumScreenshots, options: nil)
+        let options = PHFetchOptions()
+        options.sortDescriptors = [NSSortDescriptor(key: "localizedTitle", ascending: true)]
+        // Regular albums only: shared and synced albums can't be deleted from on the phone.
+        let own = PHAssetCollection.fetchAssetCollections(
+            with: .album, subtype: .albumRegular, options: options)
+
+        var albums: [PhotoAlbum] = []
+        for collections in [screenshots, own] {
+            collections.enumerateObjects { collection, _, _ in
+                let count = PHAsset.fetchAssets(in: collection, options: Self.imageOptions).count
+                guard count > 0 else { return }
+                albums.append(
+                    PhotoAlbum(
+                        id: collection.localIdentifier,
+                        title: collection.localizedTitle ?? "Untitled", imageCount: count))
+            }
+        }
+        return albums
+    }
+
+    func imageIDs(inAlbumID albumID: String, limit: Int) async -> [String] {
+        guard
+            let album = PHAssetCollection.fetchAssetCollections(
+                withLocalIdentifiers: [albumID], options: nil
+            ).firstObject
+        else { return [] }
+        let options = Self.imageOptions
+        options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        options.fetchLimit = limit
+        return Self.identifiers(of: PHAsset.fetchAssets(in: album, options: options))
+    }
+
     func assetIDs(inAlbum title: String) async throws(PipelineError) -> [String] {
         let albumOptions = PHFetchOptions()
         albumOptions.predicate = NSPredicate(format: "localizedTitle == %@", title)
@@ -103,6 +138,13 @@ struct PhotoLibrary: PhotoLibraryProviding {
 
     private static var imagesOnly: NSPredicate {
         NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+    }
+
+    /// A fresh options object each time, since callers add sorting and limits.
+    private static var imageOptions: PHFetchOptions {
+        let options = PHFetchOptions()
+        options.predicate = imagesOnly
+        return options
     }
 
     private static func identifiers(of assets: PHFetchResult<PHAsset>) -> [String] {

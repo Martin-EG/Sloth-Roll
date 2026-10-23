@@ -27,10 +27,11 @@ _Demo GIF coming soon._ **Demo video:** _link coming soon_ <!-- paste the video 
 
 ## How it works
 
-1. **Download once**: on first launch, two intro screens and a one-time download of the
+1. **Download once**: on first launch, three intro screens and a one-time download of the
    model (about 1.8 GB, Wi-Fi recommended).
-2. **Scan**: tap Scan. The app looks at your newest images and skips any it has already
-   read. A cheap **triage** pass runs first with no model loaded: camera photos are
+2. **Scan**: pick what to read (all recent photos, or one album such as your Screenshots
+   album), then tap Scan. The app looks at the newest images there and skips any it has
+   already read. Keeping screenshots in one album lets you scan it, swipe, and clean it up. A cheap **triage** pass runs first with no model loaded: camera photos are
    skipped, and Apple's Vision text recognition must find at least 20 characters. The
    same pass measures blur and takes a Vision feature print for duplicates.
 3. **Read**: the model loads once and reads only the images that passed, newest first.
@@ -92,7 +93,7 @@ SlothRoll/         The app (SwiftUI, Swift 6, iOS 18+)
   Storage/         SwiftData models (ScreenshotItem, Expense) and Persistence
   Shared/          Logger categories, toast, small extensions
   Resources/       Assets, Info.plist, entitlements
-SlothRollTests/    98 unit tests, same folders as the app
+SlothRollTests/    102 unit tests, same folders as the app
 docs/              How it works in detail, architecture, Xcode setup, debug tools and eval
 public/            Banner and icon for this README
 project.yml        XcodeGen spec (the generated SlothRoll.xcodeproj is committed)
@@ -117,7 +118,7 @@ Personal Team works). No API keys, accounts, or servers.
    free team, trust the developer in Settings › General › VPN & Device Management.
 5. First launch: stay on Wi-Fi for the model download. Allow **Full Access** to Photos on
    the first scan, and Calendars (add-only) on the first event swipe.
-6. Tests: ⌘U with an iPhone Simulator selected (98 unit tests).
+6. Tests: ⌘U with an iPhone Simulator selected (102 unit tests).
 
 Version 1.0 (build 1). Step-by-step details and command-line builds:
 [docs/xcode-setup.md](docs/xcode-setup.md). Eval screen, launch arguments and logs (Debug
@@ -171,4 +172,3 @@ own licenses above.
 - MLX and mlx-swift-lm by Apple's ml-explore team; swift-transformers and
   swift-huggingface by Hugging Face.
 - Built by Martin Espericueta.
-

@@ -22,6 +22,7 @@
 		1B64C38AF7EC13DA7075C00F /* ActionPerformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 483D1493294B0947B1558537 /* ActionPerformer.swift */; };
 		1B9EDEB4B0572E8041EC42CC /* Extractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E251C2D5DB81F63211F23D60 /* Extractor.swift */; };
 		1BC2582A25D51D350277CBE0 /* EventDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EF73A35E22FE9B4B8391D86 /* EventDraft.swift */; };
+		1CA446546F1CB641F3A190E2 /* PhotoAlbum.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA03B6E84AE6BF7534CB76C1 /* PhotoAlbum.swift */; };
 		1DDF1786F7987A81030E1E12 /* CardStackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AED17C758D5FED572F4B072 /* CardStackViewModel.swift */; };
 		1EEA5F66144EDC8235283FA4 /* TypeBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B570E54B6F03072D4204D18 /* TypeBadge.swift */; };
 		1FC08285CD13BE51F5B10E45 /* PhotoAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F1435CD40CB4EC47598BBF /* PhotoAccess.swift */; };
@@ -39,6 +40,7 @@
 		3868098632F743B56C4D3577 /* ScanStatsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88B57AE0F2D09F880D490BB /* ScanStatsSection.swift */; };
 		38D32458B84BAB6AE1FA745D /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = A18E7F97B3FA9F612DEF26CA /* HuggingFace */; };
 		38E415A782B54C62DD1CA34C /* ActionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53D7BAC1BCE7392880714261 /* ActionError.swift */; };
+		3C0D7A2D1F5CD0748195F343 /* PhotoLibraryProviding+ScanWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB7A6859D07AAF238DD5C05 /* PhotoLibraryProviding+ScanWindow.swift */; };
 		411D705B44325FF78AB54B57 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CF4ABDC1224E1025E26E33 /* SettingsView.swift */; };
 		43534BAE1699CA50639256C8 /* ImageSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60FF51962B3E73FEEBECA9A7 /* ImageSource.swift */; };
 		4847B9A44F74B63296842940 /* SlothRollApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3D99B6C290F7FF1002EFFD /* SlothRollApp.swift */; };
@@ -86,6 +88,7 @@
 		8B0DC863890EBF2B05F34BD2 /* CardTextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4628B211E381BA5FC9C95CDC /* CardTextTests.swift */; };
 		8D8D30882D73795E9CA2F9BB /* TransformersTokenizerLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C817D2DA648FF19528AD8F45 /* TransformersTokenizerLoader.swift */; };
 		90A36DCA3F0FDD86C1AD61FE /* PreviewVLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD750A22E4ED7C29789496D /* PreviewVLM.swift */; };
+		9315EB6CB5BE3ED4A5558854 /* AlbumPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391487736E41CE04DB98553E /* AlbumPickerView.swift */; };
 		94E56CE5A7C61AFA7FEB70C4 /* ScanPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF63F645AFD6647C1929281 /* ScanPhase.swift */; };
 		95FA66BACA004383B40D69EF /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E193CA966A7F0AEDF4F466FC /* CardView.swift */; };
 		9657DA73660612B69DC3D6C6 /* ScanCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8125366CD68A7BFD651DB15E /* ScanCoordinator.swift */; };
@@ -130,6 +133,7 @@
 		F653B2E8386129759CB56855 /* ModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEB9917AE65604176A2F639 /* ModelCatalog.swift */; };
 		F75DBC37B2585071E20B99EE /* CleanupReasonBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CBE5596964B442F682C9519 /* CleanupReasonBadge.swift */; };
 		F79FFBFCDA5693755999D80F /* ReceiptAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = B599968FDA7039CE72CB8128 /* ReceiptAction.swift */; };
+		F867533CFD58EAF1596B5972 /* ModelSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF701E321F1339982FCFE50B /* ModelSession.swift */; };
 		FAD8B1C9F150CE1806B6A744 /* EvalViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FF8130DCE7F7B6C54B77A6 /* EvalViewModel.swift */; };
 		FC25BC76644B6C4DEDCA7A06 /* MemoryProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A3BF18C9663FF39E077E32 /* MemoryProbe.swift */; };
 /* End PBXBuildFile section */
@@ -160,6 +164,7 @@
 		1D15C59666B688F304773B0A /* ScreenshotItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotItemTests.swift; sourceTree = "<group>"; };
 		1F9A12B895B36657022EAA66 /* ActionResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionResult.swift; sourceTree = "<group>"; };
 		1FA8E799D5C5BAB4E021ADA6 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		1FB7A6859D07AAF238DD5C05 /* PhotoLibraryProviding+ScanWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PhotoLibraryProviding+ScanWindow.swift"; sourceTree = "<group>"; };
 		20280FF9828A8B9B7B53ABC5 /* ExtractionReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtractionReport.swift; sourceTree = "<group>"; };
 		2140E22FD7BFA6CC12B855F6 /* ModelDownloadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDownloadView.swift; sourceTree = "<group>"; };
 		21951B7199D43163A1B459BD /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
@@ -173,6 +178,7 @@
 		30F1435CD40CB4EC47598BBF /* PhotoAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAccess.swift; sourceTree = "<group>"; };
 		34F4CA0B8CFCD086219EF61D /* ScanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanViewModel.swift; sourceTree = "<group>"; };
 		365FF3F562C5582C9DBC5C3E /* CleanupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupView.swift; sourceTree = "<group>"; };
+		391487736E41CE04DB98553E /* AlbumPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumPickerView.swift; sourceTree = "<group>"; };
 		39CAC85E44F619D7F58742E5 /* ScanViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanViewModelTests.swift; sourceTree = "<group>"; };
 		3AED17C758D5FED572F4B072 /* CardStackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardStackViewModel.swift; sourceTree = "<group>"; };
 		3CBE5596964B442F682C9519 /* CleanupReasonBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupReasonBadge.swift; sourceTree = "<group>"; };
@@ -233,6 +239,7 @@
 		BB3C2401B4DFDE681CC21ED4 /* EditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditSheet.swift; sourceTree = "<group>"; };
 		BBC33EB3F03DA7A32312E32C /* CardText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardText.swift; sourceTree = "<group>"; };
 		BDF63F645AFD6647C1929281 /* ScanPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanPhase.swift; sourceTree = "<group>"; };
+		BF701E321F1339982FCFE50B /* ModelSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSession.swift; sourceTree = "<group>"; };
 		C2FF8130DCE7F7B6C54B77A6 /* EvalViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvalViewModel.swift; sourceTree = "<group>"; };
 		C39982F3BC28312B4AFE9EB0 /* LibraryImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryImage.swift; sourceTree = "<group>"; };
 		C428991B60C1230945487D6D /* UsefulnessQuestionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsefulnessQuestionTests.swift; sourceTree = "<group>"; };
@@ -259,6 +266,7 @@
 		E45714CC9A0DBDD251028F9B /* PreviewPhotoLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPhotoLibrary.swift; sourceTree = "<group>"; };
 		E80DCCDDD6BE0389CA52F880 /* CleanupConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanupConfig.swift; sourceTree = "<group>"; };
 		E9D91FA2C33EE46AF3A07324 /* Duration+Seconds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Duration+Seconds.swift"; sourceTree = "<group>"; };
+		EA03B6E84AE6BF7534CB76C1 /* PhotoAlbum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoAlbum.swift; sourceTree = "<group>"; };
 		EDED423ABF5C18926493DEBE /* EvalConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvalConfig.swift; sourceTree = "<group>"; };
 		F11D9BB5DEF33287CCCCF30D /* EventAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventAction.swift; sourceTree = "<group>"; };
 		F1F82A77DD57BD613AB2AB1B /* RootTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTab.swift; sourceTree = "<group>"; };
@@ -375,9 +383,12 @@
 				60FF51962B3E73FEEBECA9A7 /* ImageSource.swift */,
 				60BD9938AA676191298E677C /* ImageTriaging.swift */,
 				C39982F3BC28312B4AFE9EB0 /* LibraryImage.swift */,
+				BF701E321F1339982FCFE50B /* ModelSession.swift */,
 				30F1435CD40CB4EC47598BBF /* PhotoAccess.swift */,
+				EA03B6E84AE6BF7534CB76C1 /* PhotoAlbum.swift */,
 				283310B851131B06FD1107EF /* PhotoLibrary.swift */,
 				4D643833FE7EF89F05C7BEE9 /* PhotoLibraryProviding.swift */,
+				1FB7A6859D07AAF238DD5C05 /* PhotoLibraryProviding+ScanWindow.swift */,
 				E19BF41C614E17CC45AFA506 /* PipelineConfig.swift */,
 				0D86C2E023532CF0865FD888 /* PipelineError.swift */,
 				4BC755C79D142A78FE339C7F /* ResultParser.swift */,
@@ -495,6 +506,7 @@
 		9BCDA6DE1CB83C6E4A457FFF /* Scan */ = {
 			isa = PBXGroup;
 			children = (
+				391487736E41CE04DB98553E /* AlbumPickerView.swift */,
 				0758A43063F5FC44F9E899F0 /* CardStackView.swift */,
 				3AED17C758D5FED572F4B072 /* CardStackViewModel.swift */,
 				BBC33EB3F03DA7A32312E32C /* CardText.swift */,
@@ -714,6 +726,7 @@
 				F2F6C881C1353EDE2F3D1DDC /* ActionResult.swift in Sources */,
 				499D4903037F06C51DC85E68 /* ActionType.swift in Sources */,
 				E47F7E9BE9580D45A6DE6CFE /* ActionsConfig.swift in Sources */,
+				9315EB6CB5BE3ED4A5558854 /* AlbumPickerView.swift in Sources */,
 				10ED078F88B3C7142A1D784C /* AppDependencies.swift in Sources */,
 				D32384E35EE5D8B69388C396 /* CardStackView.swift in Sources */,
 				1DDF1786F7987A81030E1E12 /* CardStackViewModel.swift in Sources */,
@@ -764,13 +777,16 @@
 				F653B2E8386129759CB56855 /* ModelCatalog.swift in Sources */,
 				5C3FDEC86A7BACAEA5A4B2B8 /* ModelDownloadState.swift in Sources */,
 				E2EDE90B876F5A410F0A7A7E /* ModelDownloadView.swift in Sources */,
+				F867533CFD58EAF1596B5972 /* ModelSession.swift in Sources */,
 				02B75D51AE52C85423950ECF /* OnboardingConfig.swift in Sources */,
 				5A96A1FF50C27DCEA8210099 /* OnboardingPage.swift in Sources */,
 				E7E44672189AE4E634FC11B0 /* OnboardingView.swift in Sources */,
 				DA563725C17B44B9B24ECEEB /* OnboardingViewModel.swift in Sources */,
 				F3DD694B10D5127B8F17163E /* Persistence.swift in Sources */,
 				1FC08285CD13BE51F5B10E45 /* PhotoAccess.swift in Sources */,
+				1CA446546F1CB641F3A190E2 /* PhotoAlbum.swift in Sources */,
 				5EA0284C1602069041F08288 /* PhotoLibrary.swift in Sources */,
+				3C0D7A2D1F5CD0748195F343 /* PhotoLibraryProviding+ScanWindow.swift in Sources */,
 				A3A5EE39F2CD67E97082E4CA /* PhotoLibraryProviding.swift in Sources */,
 				BA20B468FC70567BAE0057EF /* PipelineConfig.swift in Sources */,
 				B441ABF5C7C8ECAE700EF4B6 /* PipelineError.swift in Sources */,

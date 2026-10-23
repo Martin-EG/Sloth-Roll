@@ -36,6 +36,8 @@ struct FakeScanLibrary: PhotoLibraryProviding {
     /// What `deleteAssets` does: true deletes, false is the user declining, nil throws.
     var deletes: Bool? = true
     var log: ScanEventLog?
+    /// Albums and the asset IDs in each, newest first.
+    var albumContents: [PhotoAlbum: [String]] = [:]
 
     func requestAccess() async -> PhotoAccess { access }
 
@@ -44,6 +46,14 @@ struct FakeScanLibrary: PhotoLibraryProviding {
     }
 
     func assetIDs(inAlbum title: String) async throws(PipelineError) -> [String] { [] }
+
+    func albums() async -> [PhotoAlbum] {
+        albumContents.keys.sorted { $0.title < $1.title }
+    }
+
+    func imageIDs(inAlbumID albumID: String, limit: Int) async -> [String] {
+        Array((albumContents.first { $0.key.id == albumID }?.value ?? []).prefix(limit))
+    }
 
     func loadImage(assetID: String) async -> LibraryImage? {
         guard let asset = assets.first(where: { $0.id == assetID }), asset.isOnDevice else {

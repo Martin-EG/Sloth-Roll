@@ -11,6 +11,17 @@ struct PreviewPhotoLibrary: PhotoLibraryProviding {
         Array((1...imageCount).map { "preview-\($0)" }.prefix(limit))
     }
 
+    func albums() async -> [PhotoAlbum] {
+        [
+            PhotoAlbum(id: "screenshots", title: "Screenshots", imageCount: imageCount),
+            PhotoAlbum(id: "to-sort", title: "To sort", imageCount: imageCount),
+        ]
+    }
+
+    func imageIDs(inAlbumID albumID: String, limit: Int) async -> [String] {
+        await recentImageIDs(limit: limit)
+    }
+
     func assetIDs(inAlbum title: String) async throws(PipelineError) -> [String] {
         (1...imageCount).map { "preview-\($0)" }
     }

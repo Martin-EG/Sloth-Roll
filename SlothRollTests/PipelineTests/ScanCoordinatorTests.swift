@@ -121,6 +121,24 @@ struct ScanCoordinatorTests {
         #expect(await log.events.suffix(4) == ["load", "read 2", "read 3", "unload"])
     }
 
+    @Test func albumScanTriagesOnlyThatAlbum() async throws {
+        let album = PhotoAlbum(id: "album", title: "To sort", imageCount: 2)
+        let coordinator = ScanCoordinator(
+            vlm: FakeScanVLM(log: log),
+            photoLibrary: FakeScanLibrary(assets: assets(1...4), albumContents: [album: ["a2", "a4"]]),
+            triage: FakeTriage(candidateWidths: [], log: log), analyzer: FakeAnalyzer(),
+            modelContext: container.mainContext)
+
+        await coordinator.scan(albumID: "album")
+
+        #expect(Set(try items().keys) == ["a2", "a4"])
+        #expect(await log.events == ["triage 2", "triage 4"])
+
+        // A missing album scans nothing instead of falling back to the whole library.
+        await coordinator.scan(albumID: "gone")
+        #expect(coordinator.lastStats?.newImages == 0)
+    }
+
     @Test func deniedAccessStopsBeforeAnyWork() async {
         let coordinator = makeCoordinator(assets: assets(1...1), candidates: [], access: .denied)
 

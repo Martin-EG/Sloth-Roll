@@ -3,24 +3,34 @@
 Everything the app does today, step by step. The short version is in the
 [README](../README.md#how-it-works).
 
-Today (v1.0) a fresh install walks you through three short screens, downloads the model
-once, and then opens on three tabs (four when there is something to clean up). On **Scan** you tap **Scan** and the app works through
-your newest images on its own, saving every answer on the phone. Each screenshot with an
+Today (v1.0) a fresh install walks you through four short screens, downloads the model
+once, and then opens on three tabs (four when there is something to clean up). On **Scan** you pick what to read (all recent photos, or
+one album such as your Screenshots album) and tap **Scan**; the app works through those
+images on its own, saving every answer on the phone. Each screenshot with an
 action becomes a card; you swipe right to do it, left to skip. **Expenses** lists the
 receipts you kept, with a total per currency. **Clean up** appears only when the scan found
 screenshots worth deleting (blurry, duplicate, or not useful) and deletes them in one tap,
 through iOS's own confirmation. **Settings** sets how many screenshots a scan
 reads, can start over from scratch, and says which model runs on the phone.
 
-0. **First launch.** Two intro screens ("You take screenshots. Sloth Roll does the rest.",
-   "Everything runs on your iPhone. Nothing is uploaded."), then the model screen: it shows
+0. **First launch.** Three intro screens ("You take screenshots. Sloth Roll does the rest.",
+   "Everything runs on your iPhone. Nothing is uploaded.", and "Scan one album, then clean
+   it up.", which explains picking an album before a scan and deleting the junk after),
+   then the model screen: it shows
    the size (1.8 GB), recommends Wi-Fi, and has a **Download** button. While it downloads
    you see a progress bar with "640 MB of 1.8 GB" and the screen stays awake. If it fails
    (no connection, no space) you get a plain message and **Retry**. When it's done, **Start**
    opens the app, and the app remembers that onboarding is finished. If the model is already
    on the phone (reinstall that kept data), the screen goes straight to **Start**. The model
    files are kept out of iCloud backups.
-1. **Find new images.** The app asks for Photos access (if you only allow some photos, it
+1. **Pick a source (optional).** Above the Scan button a row says "All recent photos" or
+   "Album: <name>". Tapping it opens **Scan from**: All recent photos, Photos' Screenshots
+   album, then your own albums with image counts (empty, shared, and synced albums aren't
+   listed). The choice is remembered; if the album was deleted in Photos, the next scan goes
+   back to all recent photos. With an album picked, the steps below look only at the newest
+   500 images in that album.
+
+   **Find new images.** The app asks for Photos access (if you only allow some photos, it
    scans those and says so). If access is off, the Scan tab shows "Photos access is off"
    with **Open Settings** (jumps to the app's page in iOS Settings) and **Check again**. It looks at the newest 500 images and skips anything it has
    already seen. Camera photos (files with camera make/model/lens info) are skipped and

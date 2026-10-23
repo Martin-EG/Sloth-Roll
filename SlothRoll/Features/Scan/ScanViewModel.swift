@@ -2,14 +2,23 @@ import Foundation
 import Observation
 import UIKit
 
-/// Drives the scan screen: start, stop, and show the coordinator's progress.
+/// Drives the scan screen: pick what to scan (all recent photos or one album), start, stop,
+/// and show the coordinator's progress.
 @Observable
 @MainActor
 final class ScanViewModel {
     let coordinator: ScanCoordinator
+    /// Albums offered in the picker; filled by `loadAlbums()`.
+    private(set) var albums: [PhotoAlbum] = []
+    private(set) var isLoadingAlbums = false
+    /// Photos access was refused while loading albums.
+    private(set) var albumsNeedAccess = false
 
-    init(coordinator: ScanCoordinator) {
+    private let photoLibrary: any PhotoLibraryProviding
+
+    init(coordinator: ScanCoordinator, photoLibrary: any PhotoLibraryProviding) {
         self.coordinator = coordinator
+        self.photoLibrary = photoLibrary
     }
 
     var phase: ScanPhase { coordinator.phase }
@@ -75,13 +84,13 @@ final class ScanViewModel {
         }
     }
 
-    /// Scans up to `limit` new screenshots (the Settings choice).
-    func scan(limit: Int) async {
+    /// Scans up to `limit` new screenshots (the Settings choice), only from `albumID` when set.
+    func scan(limit: Int, albumID: String? = nil) async {
         // A locked phone suspends GPU work and stalls the scan for minutes.
         UIApplication.shared.isIdleTimerDisabled = true
         defer { UIApplication.shared.isIdleTimerDisabled = false }
-        Log.scan.info("scan_tapped limit=\(limit)")
-        await coordinator.scan(limit: limit)
+        Log.scan.info("scan_tapped limit=\(limit) album=\(albumID != nil)")
+        await coordinator.scan(limit: limit, albumID: albumID)
         #if DEBUG
         if let stats { saveStats(stats) }
         #endif
@@ -89,6 +98,32 @@ final class ScanViewModel {
 
     func cancel() {
         coordinator.cancel()
+    }
+
+    /// Asks for Photos access if needed, then lists the albums for the picker.
+    func loadAlbums() async {
+        isLoadingAlbums = true
+        defer { isLoadingAlbums = false }
+        guard await photoLibrary.requestAccess().canRead else {
+            albumsNeedAccess = true
+            albums = []
+            return
+        }
+        albumsNeedAccess = false
+        albums = await photoLibrary.albums()
+    }
+
+    /// The saved album if it's in `albums` (call `loadAlbums()` first); nil means all recent
+    /// photos. An album deleted in Photos falls back to all recent photos instead of
+    /// scanning nothing.
+    func validAlbumID(_ savedID: String) -> String? {
+        albums.contains { $0.id == savedID } ? savedID : nil
+    }
+
+    /// Plain words for the current choice, e.g. "All recent photos" or "Album: Screenshots".
+    static func sourceLabel(albumTitle: String?) -> String {
+        guard let albumTitle, !albumTitle.isEmpty else { return "All recent photos" }
+        return "Album: \(albumTitle)"
     }
 
     /// Opens this app's page in the Settings app, where Photos access is turned on.
@@ -100,11 +135,12 @@ final class ScanViewModel {
     #if DEBUG
     /// `-scanAutorun` starts a scan on launch; with `-scanReset` it first clears the cache.
     func autorunIfRequested(
-        limit: Int, arguments: [String] = ProcessInfo.processInfo.arguments
+        limit: Int, albumID: String? = nil,
+        arguments: [String] = ProcessInfo.processInfo.arguments
     ) async {
         guard arguments.contains(ScanConfig.autorunArgument), phase == .idle else { return }
         if arguments.contains(ScanConfig.resetArgument) { coordinator.resetCache() }
-        await scan(limit: limit)
+        await scan(limit: limit, albumID: albumID)
     }
 
     private func saveStats(_ stats: ScanStats) {

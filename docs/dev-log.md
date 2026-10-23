@@ -287,3 +287,28 @@
 - Known issues: screenshots, demo GIF and video link are placeholders. A `name=`
   Simulator destination in `xcodebuild` can match a paired phone with the same name; use
   the Simulator's UDID or ⌘U.
+
+### 2026-10-23 (day 8): scan one album, onboarding mentions it
+
+- Built: **Scan from** row above the Scan button opens a sheet: all recent photos, Photos'
+  Screenshots album, then your own albums with image counts. The choice is remembered
+  (`@AppStorage` album ID + title); an album deleted in Photos falls back to all recent
+  photos on the next scan. `ScanCoordinator.scan(limit:albumID:)` triages only that album's
+  newest 500 images; everything after triage (model, cards, Clean up) is unchanged. New
+  third onboarding page: "Scan one album, then clean it up." `ModelSession` pulled out of
+  the coordinator (one model load per scan) to keep the file near 250 lines (now 254).
+- Files added: `Pipeline/{PhotoAlbum,ModelSession,PhotoLibraryProviding+ScanWindow}.swift`,
+  `Features/Scan/AlbumPickerView.swift`. Changed: `Pipeline/{PhotoLibrary,
+  PhotoLibraryProviding,ScanCoordinator}.swift`, `Features/Scan/{ScanView,
+  ScanViewModel}.swift`, `Features/Onboarding/{OnboardingView,OnboardingConfig}.swift`,
+  `Features/Debug/PreviewPhotoLibrary.swift`, `Shared/SettingsKey.swift`,
+  `App/RootView.swift`, test fakes, `ScanCoordinatorTests` (+1), `ScanViewModelTests` (+3),
+  `docs/{how-it-works,architecture,xcode-setup}.md`, `SlothRoll.xcodeproj` (XcodeGen).
+- Decisions: shared and synced albums aren't listed (their photos can't be deleted from the
+  phone, which breaks scan-then-clean-up). Albums are only listed when the picker opens or a
+  saved album is checked before a scan, so opening the Scan tab never shows the Photos
+  prompt by itself.
+- Tests: 102 pass (Simulator). Device build: no warnings from app code.
+- Known issues: the Clean up tab offers candidates from every scan, not only the chosen
+  album. Not tried on the phone yet (album list speed with many albums, the new onboarding
+  page on a small screen). Screenshots/GIF placeholders from day 7 still open.

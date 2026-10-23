@@ -38,7 +38,7 @@ purge them) and are excluded from iCloud backup.
 
 Command-line build (no signing needed to check it compiles):
 `xcodebuild -project SlothRoll.xcodeproj -scheme SlothRoll -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build`
-Tests: ⌘U in Xcode with an iPhone Simulator selected (98 unit tests), or
+Tests: ⌘U in Xcode with an iPhone Simulator selected (102 unit tests), or
 `xcodebuild -project SlothRoll.xcodeproj -scheme SlothRoll -destination 'platform=iOS Simulator,id=<simulator UDID>' test`
 (use the UDID from `xcrun simctl list devices`; a `name=` destination can match a paired
 phone of the same name and fail).

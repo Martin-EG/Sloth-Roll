@@ -12,10 +12,11 @@ SlothRoll/
                Expenses, Clean up (only with candidates), Settings; hosts the debug eval
                sheet), RootTab
   Features/    one folder per screen (View + @Observable @MainActor ViewModel)
-    Onboarding/ OnboardingView (paged: 2 intro pages + download), OnboardingPage,
+    Onboarding/ OnboardingView (paged: 3 intro pages, incl. "scan one album", + download), OnboardingPage,
                ModelDownloadView, OnboardingViewModel (check / download / retry),
                ModelDownloadState, OnboardingConfig
-    Scan/      ScanView (scan button + progress + card stack), ScanViewModel,
+    Scan/      ScanView (source row + scan button + progress + card stack), ScanViewModel
+               (also lists albums), AlbumPickerView (all recent photos or one album),
                CardStackView (@Query of `extracted` items, drag/buttons, tint, rotation,
                haptics), CardView, CardStackViewModel (perform / skip / edit / card
                images, toast), EditSheet, CardText (plain-words proposal + SF Symbol per
@@ -31,15 +32,17 @@ SlothRoll/
                EvalSummary, EvalReport, EvalReportStore, EvalConfig,
                PreviewVLM + PreviewPhotoLibrary (fakes for SwiftUI previews)
   Pipeline/    ScanCoordinator (@Observable @MainActor: triage pass, then extraction pass,
-               then cleanup pass), CleanupJudge (blur + duplicate rules, "still useful?"
+               then cleanup pass; whole library or one album), ModelSession (one model load
+               per scan, unload at the end), CleanupJudge (blur + duplicate rules, "still useful?"
                question), ImageAnalyzing + ImageAnalyzer (Laplacian blur score, Vision
                feature print) + ImageSignals, DuplicateFinder (union-find over feature-print
                distance, keeps newest), UsefulnessQuestion (prompt + yes/no reader),
                ScanStore (SwiftData reads/writes for the scan), ScanPhase, ScanStats,
                Extractor (VLM + parse + retry), ExtractionPrompt, ResultParser,
                ExtractionReport, ImageTriaging + Triage (Vision OCR, 20+ chars) + TextScan,
-               PhotoLibraryProviding + PhotoLibrary (PhotoKit, incl. deleteAssets) +
-               PhotoAccess + LibraryImage
+               PhotoLibraryProviding (+ScanWindow: library or album IDs) + PhotoLibrary
+               (PhotoKit: albums, album contents, deleteAssets) + PhotoAlbum + PhotoAccess +
+               LibraryImage
                + ImageSource, PipelineError, PipelineConfig
   Inference/   VLMService (actor: isDownloaded / download / load / describe / unload),
                ModelCatalog, InferenceConfig, InferenceError,
@@ -81,9 +84,11 @@ backup; nothing loaded into memory) → **Start** sets the flag → tabs.
 
 Data flow for a scan:
 
-`ScanView` (reads the limit from `@AppStorage`) → `ScanViewModel.scan(limit:)` →
-`ScanCoordinator.scan(limit:)`:
-`PhotoLibrary.recentImageIDs` (newest 500) minus `ScanStore.knownAssetIDs` →
+`ScanView` (reads the limit and the chosen album from `@AppStorage`; a saved album is
+checked with `ScanViewModel.loadAlbums()` first) → `ScanViewModel.scan(limit:albumID:)` →
+`ScanCoordinator.scan(limit:albumID:)`:
+`PhotoLibraryProviding.scanWindowIDs(albumID:)` (`recentImageIDs` or
+`imageIDs(inAlbumID:)`, newest 500) minus `ScanStore.knownAssetIDs` →
 for each, `PhotoLibrary.loadImage` (1024 px + thumbnail + `ImageSource`) → camera? record
 skipped : `Triage.isCandidate` + `ImageAnalyzer.signals` → `ScanStore.record` (triaged /
 skipped, with blur + feature print) → … up to the limit → skipped items from before the
