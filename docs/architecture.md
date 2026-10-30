@@ -10,7 +10,10 @@ SlothRoll/
   App/         SlothRollApp (entry), AppDependencies (composition root, builds the action
                performers), RootView (onboarding until done, then TabView: Scan,
                Expenses, Clean up (only with candidates), Settings; hosts the debug eval
-               sheet), RootTab
+               sheet; runs App Intent requests on the Scan tab), RootTab,
+               ScanLatestScreenshotIntent (AppIntent, opens the app), SlothRollShortcuts
+               (AppShortcutsProvider: Siri, Spotlight, Action Button), ScanRequests
+               (@Observable inbox from the intent to RootView)
   Features/    one folder per screen (View + @Observable @MainActor ViewModel)
     Onboarding/ OnboardingView (paged: 3 intro pages, incl. "scan one album", + download), OnboardingPage,
                ModelDownloadView, OnboardingViewModel (check / download / retry),
@@ -37,6 +40,8 @@ SlothRoll/
                question), ImageAnalyzing + ImageAnalyzer (Laplacian blur score, Vision
                feature print) + ImageSignals, DuplicateFinder (union-find over feature-print
                distance, keeps newest), UsefulnessQuestion (prompt + yes/no reader),
+               LatestScreenshotScan (newest screenshot only: triage, read, no cleanup) +
+               LatestScanOutcome,
                ScanStore (SwiftData reads/writes for the scan), ScanPhase, ScanStats,
                Extractor (VLM + parse + retry), ExtractionPrompt, ResultParser,
                ExtractionReport, ImageTriaging + Triage (Vision OCR, 20+ chars) + TextScan,
@@ -101,6 +106,20 @@ it only if extraction had nothing to read) → `VLMServing.unload()`. The card s
 access ends in `ScanPhase.noPhotoAccess`; a failed load in `.modelLoadFailed(message:)`.
 **Rescan everything**: `SettingsViewModel` → `ScanCoordinator.resetCache()` →
 `ScanStore.deleteItemsNotDone()`.
+
+Data flow for "Scan Latest Screenshot" (Action Button, Siri, Shortcuts):
+
+`ScanLatestScreenshotIntent.perform()` (`openAppWhenRun`, so the app comes to the
+foreground) → `AppDependencies.live.scanRequests.requestLatestScreenshot()` and returns at
+once → `RootView` `.onChange(of: hasPendingLatest, initial: true)` (tabs only) →
+`takeLatestScreenshotRequest()` → Scan tab → `ScanViewModel.scanLatestScreenshot()` →
+`ScanCoordinator.scanLatestScreenshot()` (returns `.busy` if a scan is running) →
+`LatestScreenshotScan.run`: `recentImageIDs(limit: 10)` → first id that isn't a camera
+photo (`ScanStore.item(assetID:)` for known ones; unknown ones are loaded, camera photos
+recorded skipped) → `Triage` + `ImageAnalyzer` → `ScanStore.record` → `ModelSession.load`
+→ `Extractor` → `ScanStore.complete` → coordinator unloads the model → `LatestScanOutcome`
+→ `ScanViewModel.latestMessage` under the Scan button. The card appears through the same
+`@Query` as a normal scan.
 
 Data flow for a swipe:
 

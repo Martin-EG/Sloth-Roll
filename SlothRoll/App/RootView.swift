@@ -87,6 +87,9 @@ struct RootView: View {
                 }
             }
         }
+        .onChange(of: dependencies.scanRequests.hasPendingLatest, initial: true) {
+            runLatestScreenshotRequest()
+        }
         #if DEBUG
         .sheet(isPresented: $isShowingEval) {
             EvalView(viewModel: evalViewModel)
@@ -97,6 +100,14 @@ struct RootView: View {
             }
         }
         #endif
+    }
+
+    /// The App Intent asked for the newest screenshot: show the Scan tab and read it there.
+    /// Only the tabs run it, so a request during onboarding waits until the model is ready.
+    private func runLatestScreenshotRequest() {
+        guard dependencies.scanRequests.takeLatestScreenshotRequest() else { return }
+        selectedTab = .scan
+        Task { await scanViewModel.scanLatestScreenshot() }
     }
 
     /// Debug autorun launches (eval, timed scans) go straight to the tabs.

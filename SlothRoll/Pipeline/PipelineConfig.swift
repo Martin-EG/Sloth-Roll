@@ -31,6 +31,10 @@ enum PipelineConfig {
     /// inside this window, so it bounds the work when the library is mostly camera photos.
     static let libraryScanWindow = 500
 
+    /// Newest library images looked at by "scan my latest screenshot", so camera photos taken
+    /// right after the screenshot are stepped over without walking the whole library.
+    static let latestScanWindow = 10
+
     // MARK: Cleanup
 
     /// Longest side, in pixels, of the grayscale copy the blur score is measured on.

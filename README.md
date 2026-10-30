@@ -47,6 +47,11 @@ swipe, whenever you feel like it.
 5. **Clean up**: leftovers that are blurry, near-duplicates, or that the model calls not
    useful ("Is this screenshot still useful to keep?", only a clear "no" counts) show up
    in a Clean up tab. Delete goes through iOS's confirmation into Recently Deleted.
+6. **One press for the screenshot you just took**: a "Scan Latest Screenshot" action (in
+   Siri, Spotlight, Shortcuts, and the Action Button's list) opens the app on the Scan tab
+   and reads only the newest screenshot, stepping over camera photos. It skips the batch
+   work, so the card is ready in a few seconds, with one line saying what it found. The
+   app still opens: iOS only lets the model use the GPU while the app is on screen.
 
 **Where your screenshots go.** Nowhere. Text recognition (Vision) and the model (MLX on the
 phone's GPU) both run on the iPhone; no image, text, or result is uploaded, and there is no
@@ -83,7 +88,8 @@ protocol wired in `AppDependencies`, so tests swap in fakes.
 
 ```
 SlothRoll/         The app (SwiftUI, Swift 6, iOS 18+)
-  App/             Entry point, AppDependencies (wires services), RootView, tabs
+  App/             Entry point, AppDependencies (wires services), RootView, tabs,
+                   ScanLatestScreenshotIntent + SlothRollShortcuts (App Intent)
   Features/        One folder per screen: Onboarding, Scan, Expenses, Cleanup, Settings,
                    Debug (eval screen, Debug builds only)
   Pipeline/        ScanCoordinator, PhotoLibrary, Triage, Extractor, ExtractionPrompt,
@@ -94,7 +100,7 @@ SlothRoll/         The app (SwiftUI, Swift 6, iOS 18+)
   Storage/         SwiftData models (ScreenshotItem, Expense) and Persistence
   Shared/          Logger categories, toast, small extensions
   Resources/       Assets, Info.plist, entitlements
-SlothRollTests/    102 unit tests, same folders as the app
+SlothRollTests/    113 unit tests, same folders as the app
 docs/              How it works in detail, architecture, Xcode setup, debug tools and eval,
                    dev log
 public/            Banner, icon and screenshots for this README
@@ -120,7 +126,11 @@ Personal Team works). No API keys, accounts, or servers.
    free team, trust the developer in Settings › General › VPN & Device Management.
 5. First launch: stay on Wi-Fi for the model download. Allow **Full Access** to Photos on
    the first scan, and Calendars (add-only) on the first event swipe.
-6. Tests: ⌘U with an iPhone Simulator selected (102 unit tests).
+6. Tests: ⌘U with an iPhone Simulator selected (113 unit tests).
+7. Optional, one-press scan: Settings › Action Button › Shortcut › Sloth Roll › **Scan
+   Latest Screenshot** (or Settings › Accessibility › Touch › Back Tap › Double Tap, pick
+   the same shortcut). Take a screenshot, press the button, and the card is waiting. You
+   can also say "Scan my latest screenshot with Sloth Roll".
 
 Version 1.0 (build 1). Step-by-step details and command-line builds:
 [docs/xcode-setup.md](docs/xcode-setup.md). Eval screen, launch arguments and logs (Debug

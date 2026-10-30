@@ -25,15 +25,25 @@ struct ScanStore {
         return (try? context.fetch(descriptor)) ?? []
     }
 
+    /// The item for this asset, if it has been seen.
+    func item(assetID: String) -> ScreenshotItem? {
+        var descriptor = FetchDescriptor<ScreenshotItem>(
+            predicate: #Predicate { $0.assetID == assetID })
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first
+    }
+
+    @discardableResult
     func record(
         assetID: String, status: ScanStatus, skipReason: SkipReason? = nil, capturedAt: Date?,
         signals: ImageSignals? = nil
-    ) {
+    ) -> ScreenshotItem {
         let item = ScreenshotItem(
             assetID: assetID, status: status, skipReason: skipReason, capturedAt: capturedAt)
         if let signals { apply(signals, to: item) }
         context.insert(item)
         save()
+        return item
     }
 
     // MARK: Cleanup

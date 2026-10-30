@@ -13,6 +13,8 @@ final class ScanViewModel {
     private(set) var isLoadingAlbums = false
     /// Photos access was refused while loading albums.
     private(set) var albumsNeedAccess = false
+    /// How the last "scan my latest screenshot" ended; cleared when a full scan starts.
+    private(set) var latestOutcome: LatestScanOutcome?
 
     private let photoLibrary: any PhotoLibraryProviding
 
@@ -50,7 +52,7 @@ final class ScanViewModel {
         case .idle, .preparing, .triage, .loadingModel, .extract, .cleanup, .noPhotoAccess,
             .modelLoadFailed:
             nil
-        case .finished: finishedMessage
+        case .finished: latestOutcome.flatMap(Self.latestMessage) ?? finishedMessage
         case .cancelled: "Stopped. Everything read so far is saved."
         case .pausedForMemory:
             "Paused: your iPhone is low on memory, so the model was unloaded. Close other apps, then resume."
@@ -90,10 +92,37 @@ final class ScanViewModel {
         UIApplication.shared.isIdleTimerDisabled = true
         defer { UIApplication.shared.isIdleTimerDisabled = false }
         Log.scan.info("scan_tapped limit=\(limit) album=\(albumID != nil)")
+        latestOutcome = nil
         await coordinator.scan(limit: limit, albumID: albumID)
         #if DEBUG
         if let stats { saveStats(stats) }
         #endif
+    }
+
+    /// Reads only the newest screenshot (from the App Intent). While a full scan runs, that
+    /// scan reads the newest images first anyway, so the request is dropped.
+    func scanLatestScreenshot() async {
+        UIApplication.shared.isIdleTimerDisabled = true
+        defer { UIApplication.shared.isIdleTimerDisabled = false }
+        Log.scan.info("latest_scan_requested")
+        let outcome = await coordinator.scanLatestScreenshot()
+        if outcome != .busy { latestOutcome = outcome }
+    }
+
+    /// The line under the Scan button after a "latest screenshot" scan. Nil when the phase
+    /// already says it (no Photos access, model failed) or a full scan was running.
+    static func latestMessage(_ outcome: LatestScanOutcome) -> String? {
+        switch outcome {
+        case .card(.event): "Your latest screenshot is an event. Swipe right to add it to Calendar."
+        case .card(.place): "Your latest screenshot is a place. Swipe right to open it in Maps."
+        case .card(.receipt):
+            "Your latest screenshot is a receipt. Swipe right to add it to Expenses."
+        case .card(.none), .nothingFound:
+            "No event, place, or receipt in your latest screenshot."
+        case .alreadyDone: "You already took care of your latest screenshot."
+        case .noScreenshot: "No recent screenshot on this iPhone. Take one, then try again."
+        case .noPhotoAccess, .modelLoadFailed, .busy: nil
+        }
     }
 
     func cancel() {

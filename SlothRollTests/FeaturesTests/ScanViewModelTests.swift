@@ -40,6 +40,29 @@ struct ScanViewModelTests {
         #expect(viewModel.statusMessage == "Found 1 new card.")
     }
 
+    @Test func latestScreenshotSaysWhatItFound() async {
+        let viewModel = makeViewModel(assets: [.init(id: "a1", width: 1)])
+
+        await viewModel.scanLatestScreenshot()
+
+        #expect(viewModel.statusMessage?.hasPrefix("Your latest screenshot is an event") == true)
+    }
+
+    @Test func fullScanReplacesTheLatestScreenshotMessage() async {
+        let viewModel = makeViewModel(assets: [.init(id: "a1", width: 1)])
+        await viewModel.scanLatestScreenshot()
+
+        await viewModel.scan(limit: 25)
+
+        #expect(viewModel.statusMessage?.hasPrefix("No new screenshots") == true)
+    }
+
+    @Test func latestMessageIsLeftToThePhaseForErrors() {
+        #expect(ScanViewModel.latestMessage(.noPhotoAccess) == nil)
+        #expect(ScanViewModel.latestMessage(.modelLoadFailed(message: "x")) == nil)
+        #expect(ScanViewModel.latestMessage(.card(.place))?.contains("Maps") == true)
+    }
+
     @Test func deniedAccessShowsThePermissionScreen() async {
         let viewModel = makeViewModel(assets: [.init(id: "a1", width: 1)], access: .denied)
 

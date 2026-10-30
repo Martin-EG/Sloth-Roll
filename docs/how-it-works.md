@@ -93,6 +93,21 @@ reads, can start over from scratch, and says which model runs on the phone.
    ones you unselected are kept for good and never offered again, and the tab disappears
    once you leave it empty.
 
+8. **Scan Latest Screenshot (one press).** The app offers an App Intent that shows up in
+   Siri, Spotlight, the Shortcuts app, and the Action Button's Shortcut list, with no
+   Shortcut to build. Running it opens Sloth Roll on the Scan tab and reads only the newest
+   image on the phone: it looks at the 10 newest, steps over camera photos (and records
+   them as skipped), triages the first screenshot or saved image, and if it has text, loads
+   the model, reads it, and unloads it. Older leftovers and the Clean up pass are skipped,
+   so the card is ready in a few seconds. One line under the Scan button says what
+   happened ("Your latest screenshot is an event. Swipe right to add it to Calendar.", "No
+   event, place, or receipt in your latest screenshot.", "You already took care of your
+   latest screenshot."). A screenshot that was already read isn't read again. If a full
+   scan is already running, the request is dropped, since that scan reads the newest images
+   first anyway. If the app is still on onboarding, the request waits until the tabs show.
+   Why the app opens: the model runs on the GPU, and iOS only gives the GPU to an app on
+   screen. iOS has no "a screenshot was taken" event for apps, so the user starts it.
+
 **Reading one image** (the extraction step):
 
 1. The app builds a prompt (Spanish + English) that includes the day the screenshot was

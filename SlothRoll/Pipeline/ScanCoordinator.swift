@@ -98,6 +98,32 @@ final class ScanCoordinator {
             }
     }
 
+    /// Reads only the newest screenshot (the Action Button / Siri / Shortcuts entry point),
+    /// skipping the batch steps so its card is ready in seconds, then unloads the model.
+    func scanLatestScreenshot() async -> LatestScanOutcome {
+        guard !isRunning else { return .busy }
+        stopRequest = nil
+        phase = .preparing
+        progress = (0, 1)
+        let latest = LatestScreenshotScan(
+            photoLibrary: photoLibrary, triage: triage, analyzer: analyzer, extractor: extractor,
+            store: store, model: model)
+        let outcome = await latest.run { phase, thumbnail in
+            self.phase = phase
+            currentThumbnail = thumbnail
+        }
+        await model.unloadIfLoaded()
+        currentThumbnail = nil
+        Log.pipeline.info("latest_scan outcome=\(String(describing: outcome), privacy: .public)")
+        phase =
+            switch outcome {
+            case .noPhotoAccess: .noPhotoAccess
+            case .modelLoadFailed(let message): .modelLoadFailed(message: message)
+            default: .finished
+            }
+        return outcome
+    }
+
     /// Stops after the current image; everything finished so far stays saved.
     func cancel() {
         guard isRunning else { return }

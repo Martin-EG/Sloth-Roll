@@ -13,6 +13,8 @@ final class AppDependencies {
     let scanCoordinator: ScanCoordinator
     /// One performer per action type; "none" has none.
     let actionPerformers: [ActionType: any ActionPerformer]
+    /// Scan requests from the App Intent, picked up by `RootView`.
+    let scanRequests = ScanRequests()
 
     /// `actionPerformers` defaults to the live EventKit / Maps / SwiftData ones.
     init(

@@ -323,3 +323,33 @@
   selecting-album.png,reading-screenshots.png}`. Changed: `README.md`. No code changed.
 - Known issues: no screenshot of the Expenses or Clean up tabs yet. The original `.HEIC`
   files are left out of git.
+
+### 2026-10-30 (day 9): Scan Latest Screenshot (Action Button, Siri, Shortcuts)
+
+- Built: an App Intent, "Scan Latest Screenshot", listed in Siri, Spotlight, Shortcuts, and
+  the Action Button's Shortcut list through an `AppShortcutsProvider`. It opens the app
+  (`openAppWhenRun`) and leaves a request in `ScanRequests`; `RootView` switches to the Scan
+  tab and runs `ScanViewModel.scanLatestScreenshot()`. `LatestScreenshotScan` looks at the
+  10 newest images, steps over camera photos, triages the first screenshot or saved image,
+  and reads it with the model if it has text. No leftovers and no Clean up pass, so it
+  takes seconds. A one-line message says what it found. Already-read screenshots aren't
+  read again.
+- Files added: `App/{ScanLatestScreenshotIntent,SlothRollShortcuts,ScanRequests}.swift`,
+  `Pipeline/{LatestScreenshotScan,LatestScanOutcome}.swift`,
+  `SlothRollTests/PipelineTests/LatestScreenshotScanTests.swift` (8 tests). Changed:
+  `App/{AppDependencies,RootView}.swift`, `Pipeline/{ScanCoordinator,ScanStore,
+  PipelineConfig}.swift`, `Features/Scan/ScanViewModel.swift`, `ScanViewModelTests` (+3),
+  `SlothRoll.xcodeproj` (six files added by hand, matching XcodeGen's layout), README and
+  `docs/{how-it-works,architecture,xcode-setup}.md`.
+- Decisions: the intent returns at once and the app does the work on screen, because the
+  model needs the GPU (foreground only) and Shortcuts would time out waiting for the
+  model load plus a read. The intent takes no image input: it reads the newest image in Photos,
+  so it works with the normal screenshot buttons followed by the Action Button. It picks the newest non-camera
+  image rather than only Photos' "screenshot" subtype, so an image saved by a Shortcut or
+  from a chat works too.
+- Tests: 113 expected. Not built or run yet: this session had no Xcode, so the device build,
+  the tests, and the warning check still need to be done on a Mac.
+- Known issues: `ScanCoordinator.swift` grew to about 280 lines (over the ~250 guideline);
+  the triage, extraction, and cleanup passes should move into their own types. In the iOS 26
+  SDK `openAppWhenRun` may show a deprecation warning in favor of `supportedModes`; it is
+  kept because the app targets iOS 18.

@@ -32,13 +32,19 @@ First-time build on your own Mac and iPhone. The short version is in the
 6. First launch: stay on Wi-Fi for the one-time model download (~1.8 GB) on the last
    onboarding screen. Allow **Full Access** to Photos when you tap **Scan**, and Calendars
    (add-only) on the first event swipe.
+7. Optional, one-press scan of the newest screenshot: Settings › Action Button ›
+   Shortcut › Sloth Roll › **Scan Latest Screenshot**. Without an Action Button: Settings ›
+   Accessibility › Touch › Back Tap › Double Tap › the same shortcut. It also works from
+   Siri ("Scan my latest screenshot with Sloth Roll") and Spotlight. Nothing to set in
+   Info.plist or entitlements: App Intents need neither. The shortcut appears after the
+   app has been launched once.
 
 No API keys, accounts, or servers. The model files go to Application Support (iOS won't
 purge them) and are excluded from iCloud backup.
 
 Command-line build (no signing needed to check it compiles):
 `xcodebuild -project SlothRoll.xcodeproj -scheme SlothRoll -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build`
-Tests: ⌘U in Xcode with an iPhone Simulator selected (102 unit tests), or
+Tests: ⌘U in Xcode with an iPhone Simulator selected (113 unit tests), or
 `xcodebuild -project SlothRoll.xcodeproj -scheme SlothRoll -destination 'platform=iOS Simulator,id=<simulator UDID>' test`
 (use the UDID from `xcrun simctl list devices`; a `name=` destination can match a paired
 phone of the same name and fail).
